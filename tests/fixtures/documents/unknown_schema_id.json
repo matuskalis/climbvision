@@ -1,0 +1,5 @@
+{
+  "schema_id": "climbvision.hold_detection",
+  "schema_version": 1,
+  "note": "hand-built: a schema_id no Stage 1 model claims. Validation must dispatch on this field and refuse, not guess from the filename."
+}

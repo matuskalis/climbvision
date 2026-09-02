@@ -1,0 +1,39 @@
+{
+  "config_version": "ingest/v1",
+  "description": "Stage 1 ingest envelope. Every threshold here is advisory: a recording outside the envelope is flagged, never rejected. Only structural facts (no video stream, no timebase, no packets) are hard failures.",
+  "notes": "The resolution and frame-rate thresholds state what this MVP claims to support, taken verbatim from the frozen operating envelope in docs/mvp-contract.md Section 1. They are deliberately NOT an answer to the separate, unmeasured question of what resolution and sampling rate a later stage needs to resolve a hand on a hold at gym-typical camera distance. If that downstream-detectability floor is ever established, it belongs here as its own threshold with its own evidence and its own status tag, not as a reinterpretation of these two.",
+  "status_tag_meaning": {
+    "[FIXED]": "fixed now; changing it requires a documented decision record",
+    "[PILOT]": "to be estimated from pilot footage; the current number is a placeholder, not a result",
+    "[PLANNING]": "illustrative planning guidance; not a result and not a commitment"
+  },
+  "thresholds": {
+    "min_width": {
+      "value": 1920,
+      "unit": "pixels",
+      "status": "[FIXED]",
+      "selection": "Not measured. Taken verbatim from the frozen Stage 0 operating envelope in docs/mvp-contract.md Section 1, which fixes the supported resolution at at least 1080p. Changing it requires changing that contract, not this file."
+    },
+    "min_height": {
+      "value": 1080,
+      "unit": "pixels",
+      "status": "[FIXED]",
+      "selection": "Not measured. Taken verbatim from the frozen Stage 0 operating envelope in docs/mvp-contract.md Section 1 (at least 1080p). Paired with min_width so a 1080p recording in either orientation is judged against the same envelope."
+    },
+    "min_frame_rate": {
+      "value": {
+        "num": 30,
+        "den": 1
+      },
+      "unit": "frames_per_second_rational",
+      "status": "[FIXED]",
+      "selection": "Not measured. Taken verbatim from the frozen Stage 0 operating envelope in docs/mvp-contract.md Section 1 (at least 30 fps). Stored as an exact rational because 30000/1001 and 810/59 both occur and neither is representable as a float without changing the recorded value."
+    },
+    "max_distinct_pts_delta_count": {
+      "value": 1,
+      "unit": "count",
+      "status": "[FIXED]",
+      "selection": "Definitional, not empirical. A constant-frame-rate stream has exactly one distinct inter-PTS delta; two or more distinct deltas is variable frame rate by definition. Set to 1 so the flag is a measurement of the container, not a tolerance to be tuned. Frame-drop tolerance, if it is ever wanted, belongs in a separate threshold with its own evidence."
+    }
+  }
+}

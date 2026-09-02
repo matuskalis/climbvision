@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- OS ---
+.DS_Store
+
+# --- Generated analysis artifacts (regenerate, never hand-edit) ---
+artifacts/
+artifacts*/
+
+# --- Media and human-subjects data: path-scoped, NOT global extension bans ---
+# Rationale: a global `*.mp4` / `*.json` ignore would silently untrack the tiny synthetic
+# test fixtures this repo depends on. Ignore the heavy PATHS instead of the file TYPES.
+data/raw/
+data/recordings/
+data/consent/
+data/interim/
+data/cache/
+!tests/fixtures/**
+
+# --- Model weights / checkpoints (never committed; see docs/model-registry.md) ---
+weights/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key

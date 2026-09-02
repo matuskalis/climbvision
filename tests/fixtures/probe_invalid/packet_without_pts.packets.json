@@ -1,0 +1,21 @@
+{
+    "packets": [
+        {
+            "dts": 0,
+            "duration": 40000,
+            "flags": "K__"
+        },
+        {
+            "pts": 80000,
+            "dts": 40000,
+            "duration": 40000,
+            "flags": "___"
+        },
+        {
+            "pts": 40000,
+            "dts": 80000,
+            "duration": 40000,
+            "flags": "___"
+        }
+    ]
+}
