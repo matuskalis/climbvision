@@ -218,11 +218,16 @@ recorded at ingest as a fact about the file.
 
 - Splits are **group-aware on two keys simultaneously**: by participant and by problem. The
   same climber never straddles a split, and the same problem never straddles a split.
+- The **participant clause applies to multi-participant releases.** A single-participant release
+  must **explicitly declare** `participant: accepted_single_participant` in its release manifest,
+  and the leakage test **fails** if the release declares neither that nor `none` for that key.
+  Every number measured on such a release carries the caveat that it supports **within-climber
+  claims only** and estimates nothing about other climbers.
 - The **test set is frozen** and evaluated **once**.
 - **Never tune on the frozen test set.** Model selection, threshold selection and prompt
   selection all happen on validation data only.
-- **Leakage is tested, not assumed**: named tests assert that no participant ID and no problem
-  ID appears in more than one split.
+- **Leakage is tested, not assumed**: named tests assert that no participant ID, no problem ID
+  and no asset SHA-256 appears in more than one split.
 
 The split manifests themselves are a **Stage 2 deliverable and do not exist yet.** This section
 is the rule they must satisfy, not a description of an existing artifact.
@@ -235,8 +240,8 @@ One gate per stage. A stage is not complete until its gate is measured and repor
 | Stage | Scope | Gate |
 | --- | --- | --- |
 | 1 | Deterministic ingest: video to content-addressed manifest | **Real and measurable, executing now.** All tests and lint pass; schema round-trip succeeds; repeated ingest is idempotent; timestamp round-trip error is no greater than one source frame `[FIXED]`. Full statement in `evaluation.md`. |
-| 2 | Annotation harness, CVAT adapter, group-aware split manifests | Target `[PILOT]`: inter-annotator agreement on the contact ontology, to be set on validation data. Leakage tests pass (deterministic, not `[PILOT]`). |
-| 3 | Wall calibration and hold instance segmentation | Target `[PILOT]`: hold mask IoU and AP, to be set on validation data. |
+| 2 | Annotation harness, CVAT adapter, group-aware split manifests | Target `[PILOT]`: agreement on the contact ontology, to be set on validation data - **inter-annotator agreement where two or more annotators exist; otherwise blind intra-annotator test-retest consistency, reported as `self_agreement` and never as inter-annotator agreement** (`annotation-guide.md` Section 6). Leakage tests pass (deterministic, not `[PILOT]`). |
+| 3 | Wall calibration and confirmed hold map | Deterministic clauses (not `[PILOT]`): reprojection error reported in wall units; fiducial hull coverage reported; re-fitting identical inputs yields a byte-identical calibration. Target `[PILOT]`: hold-polygon **self-agreement IoU** on a re-traced subset, to be set on validation data. Model **mask IoU and AP are recorded as `not_applicable`** until a segmenter is adopted by an explicit decision; the hold map is user-confirmed by contract, so no segmenter is required to reach this gate. |
 | 4 | Climber pose trajectories | Target `[PILOT]`: PCK, including endpoint PCK for palm and toe anchors, to be set on validation data. |
 | 5 | Limb-hold contact intervals and stable contact-state transitions | Target `[PILOT]`: temporal IoU, event F1, boundary error, false-contact time, risk-coverage, all to be set on validation data. |
 | 6 | Attempts, moves, beta sequences, fall events | Target `[PILOT]`: normalized sequence edit distance against adjudicated beta, to be set on validation data. |

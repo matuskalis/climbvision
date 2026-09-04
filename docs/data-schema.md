@@ -32,9 +32,22 @@ model for an entity whose real structure is not yet known.
 | `MoveEvent` | A transition between stable contact configurations | 6 | no |
 | `BetaSequence` | Ordered attach/release tokens, limb-aware and limb-agnostic | 6 | no |
 | `FallEvent` | Unrecovered loss of contact and the last stable configuration | 6 | no |
-| `MetricValue` | One measured aggregate with its support and units | 7 | no |
+| `MetricValue` | One measured aggregate with its support and units | 2 | no |
 | `PredictionProvenance` | The provenance block attached to any model output | 4 | no |
 | `CorrectionEvent` | A human correction of a prediction or annotation, append-only | 2 | no |
+
+**Entity introduced vs workflow exposed.** "Stage introduced" is the stage at which the **model
+must exist in code**, not the stage at which a **human-facing control** exists. Read as the
+second, three rows look contradictory against `mvp-contract.md` Section 9:
+
+| Entity | Model needed at | Control or UI at |
+| --- | --- | --- |
+| `ConsentRecord` | 2, because a release cannot be assembled without consent status | 8, consent and retention controls |
+| `Participant` | 2, because it is a split grouping key | 8, participant-facing surface |
+| `CorrectionEvent` | 2, because adjudication records corrections append-only | 8, correction workflow |
+
+`MetricValue` is at 2 for the same reason: Stage 2's own gate is a measured agreement number,
+and `MetricValue` is the output type of every evaluation from Stage 2 onward.
 
 ## 2. Stage 1 entities (exist in code)
 
@@ -190,8 +203,8 @@ Every analysis run must record:
 | Data | Format | Stage |
 | --- | --- | --- |
 | Sparse events and manifests | Versioned JSON | 1 |
-| Masks | COCO polygons or RLE | 3 |
-| Dense trajectories | Parquet / Arrow | 4 |
+| Masks | COCO polygons. **RLE deferred**, because it would require a numerical array dependency at a stage that otherwise needs none. | 3 |
+| Dense trajectories | Canonical JSON with parallel integer arrays, following the `FrameIndex` pattern Stage 1 already proves. **Parquet / Arrow deferred** until a stage demonstrates a need and records how it handles the no-float rule, because Parquet means a dependency of roughly 40 MB `[PLANNING]` and a float-native columnar format for a volume of roughly one megabyte per attempt `[PLANNING]`. | 4 |
 | Overlays and rendered video | Derived diagnostics only | 3+ |
 
 An overlay is **never the only result.** A rendered video is not queryable, not comparable and

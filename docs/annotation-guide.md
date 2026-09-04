@@ -157,8 +157,15 @@ with its own provenance.**
 | Disagreement is data | The rate and location of disagreements measure ontology quality. Erasing disagreements destroys that signal. |
 | `unknown` is a valid adjudication | If two annotators disagree and the evidence does not decide it, the adjudicated value is `unknown`. Adjudication does not mean picking a winner. |
 
-Inter-annotator agreement targets are `[PILOT]`: they will be set on Stage 2 validation data and
-do not exist yet.
+Agreement targets are `[PILOT]`: they will be set on Stage 2 validation data and do not exist
+yet. **Where two or more annotators exist, the measure is inter-annotator agreement.** Where
+there is one annotator, the measure is a **blind intra-annotator test-retest**: the same items
+are annotated a second time without sight of the first pass, and the result is reported as
+`self_agreement`, **never** as inter-annotator agreement.
+
+Self-agreement measures the stability of one person's interpretation and is an **upper bound on
+what a second annotator would achieve**; it says nothing about whether the ontology is
+shareable.
 
 ---
 

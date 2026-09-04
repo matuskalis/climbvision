@@ -16,7 +16,7 @@ observations, not thresholds, and so carry no status tag; thresholds keep theirs
 | 0 | Frozen contract and documentation | **complete** | The seven Stage 0 documents exist: `README.md`, `docs/mvp-contract.md`, `docs/data-schema.md`, `docs/annotation-guide.md`, `docs/evaluation.md`, `docs/model-registry.md`, `docs/status.md` |
 | 1 | Deterministic ingest: video to content-addressed manifest | **complete** | All four clauses measured and passing; see the Stage 1 table below. Code review verified every clause by **independent measurement** rather than by accepting the implementation's report, and passed on the second pass with zero new findings. The first pass found two defects, both closed at the root before approval: a fabricated frame-rate delta computed across a timestamp gap, and a content-addressed manifest that could be silently overwritten out from under the run record attesting to it. |
 | 2 | Annotation harness, CVAT adapter, group-aware split manifests | not started | - |
-| 3 | Wall calibration and hold instance segmentation | not started | - |
+| 3 | Wall calibration and confirmed hold map | not started | - |
 | 4 | Climber pose trajectories | not started | - |
 | 5 | Limb-hold contact intervals and stable contact-state transitions | not started | - |
 | 6 | Attempts, moves, beta sequences, fall events | not started | - |
@@ -71,3 +71,5 @@ run on a different fixture set.
 | Real user video, faces, consent records | **None, by contract.** See `mvp-contract.md` Section 7. |
 | Test fixtures | Synthetic, containing no people |
 | CLI commands that exist | `climbvision ingest`, `climbvision validate` |
+| Operational documents | `AGENTS.md`, `CLAUDE.md` and `docs/agents/` (the operating manual, the checklists and the per-stage briefs). They direct how work is done and claim no results. |
+| Known defects | The resolution check requires coded width at least `min_width` 1920 `[FIXED]` **and** coded height at least `min_height` 1080 `[FIXED]`, so portrait-orientation 1080p footage whose **rotation is baked into the pixels** transposes the two and is recorded as a resolution `fail`, although the same pixels in landscape pass. The fix is scheduled as **Stage 2's first task**. Workaround until then: **film in landscape.** |

@@ -13,15 +13,29 @@ being measured now.
 
 ## 1. Metric definitions
 
-### Stage 3 - hold instance segmentation
+### Stage 3 - wall calibration and confirmed hold map
 
 | Metric | Unit | Computed over | Target |
 | --- | --- | --- | --- |
-| Mask IoU | Unitless ratio | Per predicted hold mask against its adjudicated mask, on the wall reference image | `[PILOT]` |
-| Mask AP | Unitless ratio | Averaged over IoU thresholds, per `WallSet` | `[PILOT]` |
+| Max reprojection error | **Integer milli-wall-units** | The single worst fiducial correspondence used to fit the calibration | Reported, not thresholded |
+| RMS reprojection error | **Integer milli-wall-units** | The same correspondences, pooled | Reported, not thresholded |
+| Hold-polygon self-agreement IoU | Unitless ratio | Two blind tracings of the same hold by the same annotator, on a re-traced subset, per `WallSet` | `[PILOT]` |
+| Mask IoU | Unitless ratio | Per predicted hold mask against its adjudicated mask, on the wall reference image | `[PILOT]`, **`not_applicable` until a segmenter is adopted** |
+| Mask AP | Unitless ratio | Averaged over IoU thresholds, per `WallSet` | `[PILOT]`, **`not_applicable` until a segmenter is adopted** |
 
-Reported per `WallSet` as well as pooled: a model that works on one gym's hold colours and fails
-on another's is not visible in a pooled number.
+Reprojection error is reported in **integer milli-wall-units** because no field may be
+float-typed (`data-schema.md` Section 7).
+
+The two mask metrics apply **only once a segmenter is adopted by an explicit decision.** The hold
+map is user-confirmed by contract, so until that decision they are recorded as `not_applicable`,
+which is neither zero nor a failure: the accuracy of a model that does not exist is undefined,
+not bad.
+
+Self-agreement IoU measures the stability of one annotator's tracing, not model accuracy, and is
+**never** reported as inter-annotator agreement (`annotation-guide.md` Section 6).
+
+Mask metrics are reported per `WallSet` as well as pooled: a model that works on one gym's hold
+colours and fails on another's is not visible in a pooled number.
 
 ### Stage 4 - pose
 
@@ -81,7 +95,8 @@ disclaimer. A number that should not be read must not be printed.
 
 | Rule | Detail |
 | --- | --- |
-| Group-aware splits | Grouped on **participant and problem simultaneously**. The same climber never straddles a split; the same problem never straddles a split. |
+| Group-aware splits | Grouped on **participant and problem simultaneously**. The same climber never straddles a split; the same problem never straddles a split. The participant clause is qualified by the next row. |
+| Single-participant releases | The participant clause applies to **multi-participant releases**. A single-participant release must **explicitly declare** `participant: accepted_single_participant` in its release manifest, and the leakage test **fails** if it declares neither that nor `none` for that key. Every number measured on such a release carries the caveat that it supports **within-climber claims only** and estimates nothing about other climbers. |
 | Frozen test set | Fixed once, evaluated **once**. |
 | Never tune on test | Model selection, threshold selection and prompt selection use validation data only. |
 | Leakage is **tested**, not assumed | Named tests assert no participant ID and no problem ID appears in more than one split, and that no asset SHA-256 appears in more than one split. |
