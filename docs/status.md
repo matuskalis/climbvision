@@ -21,10 +21,11 @@ observations, not thresholds, and so carry no status tag; thresholds keep theirs
 | 5 | Limb-hold contact intervals and stable contact-state transitions | not started | - |
 | 6 | Attempts, moves, beta sequences, fall events | not started | - |
 | 7 | Descriptive aggregates | not started | - |
-| 8 | Comparison of repeated attempts | not started | - |
+| 8 | Minimal application surface: upload/job API, web review timeline, correction workflow, repeated-attempt comparison as a view over Stage 6 and 7 output, consent and retention controls | not started | - |
 
 Stages 2 through 8 have **not started**. No code, no data, no annotations and no models exist
-for them. Their acceptance gates are `[PILOT]` targets in `mvp-contract.md` Section 9.
+for them. Their acceptance gates are in `mvp-contract.md` Section 9: `[PILOT]` targets for
+Stages 2 through 7, and a workflow gate for Stage 8.
 
 ---
 

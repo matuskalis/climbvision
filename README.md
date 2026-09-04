@@ -20,6 +20,10 @@ video
 **Traceability rule.** Every output must be traceable to one of: pixels, a human annotation, a
 named model, a deterministic derivation, or a measured aggregate. Nothing else may be emitted.
 
+**Current state: Stage 1 of 8 complete.** Ingest works: a video file becomes a content-addressed
+manifest. **Stages 2 through 8 do not exist yet** - no pose, no hold detection, no calibration,
+no annotations, no models, no application. See [Status](#status) and [Roadmap](#roadmap).
+
 ## What it is / what it is not
 
 | ClimbVision is | ClimbVision is not |
@@ -61,12 +65,33 @@ malformed input.
 | --- | --- |
 | 0 - Frozen contract and documentation | complete |
 | 1 - Deterministic ingest | complete |
-| 2 - Annotation harness, CVAT adapter, split manifests (next) | not started |
-| 3 through 8 | not started |
+| 2 - Annotation harness and splits | not started |
+| 3 - Wall calibration and hold map | not started |
+| 4 - Pose trajectories | not started |
+| 5 - Contact intervals | not started |
+| 6 - Attempts, moves, beta, falls | not started |
+| 7 - Repeated-attempt analytics | not started |
+| 8 - Minimal application surface | not started |
 
 Stage 1 implements ingest only: a video file becomes a content-addressed manifest. No pose, no
 hold detection, no calibration, no models. Per-stage gates and measured evidence live in
 [`docs/status.md`](docs/status.md).
+
+## Roadmap
+
+Each stage has a gate. **A stage does not start until the previous stage's gate is measured and
+reported** in [`docs/status.md`](docs/status.md). The constraint on each line is what keeps this
+a telemetry system rather than a coaching product.
+
+| Stage | Delivers | Constraint |
+| --- | --- | --- |
+| 2 | Annotation harness, CVAT adapter, group-aware split manifests | CVAT is an **adapter**; the internal schema stays the source of truth. Splits are group-aware and frozen, and leakage is **tested, not assumed**. |
+| 3 | Wall calibration and the hold map | Manual hold polygons and explicit problem membership **first**. Automatic segmentation only as **assistive preannotation**, behind a documented model adapter. |
+| 4 | Climber pose trajectories | **One** pretrained pose backend, chosen by an ADR and benchmarked on the ClimbVision gold set, **not** by generic COCO AP. Raw keypoints and visibility stored **before** any filtering. |
+| 5 | Limb-hold contact intervals and stable contact-state transitions | An **interpretable geometry and temporal baseline before any learned model**. Hands and feet evaluated as **separate slices**. |
+| 6 | Attempts, moves, beta sequences, fall events, and comparison of two attempts by contact-event alignment | Moves are **derived from contact transitions**. **No generated coaching text.** |
+| 7 | Repeated-attempt descriptive analytics: projected hip trajectory, move duration, contact dwell, explicitly defined hesitation observations, foot-adjustment counts, success/failure grouping, transition failure hazard with uncertainty | Only metrics derived from **validated primitives**. Returns `insufficient_data` when support is inadequate. |
+| 8 | Minimal application surface: upload/job API, web review timeline, correction workflow, repeated-attempt comparison as a view over Stage 6 and 7 output, consent and retention controls | Application surface only **after the telemetry gates pass**. **No mobile app** until real web usage validates the workflow. |
 
 ## Install
 

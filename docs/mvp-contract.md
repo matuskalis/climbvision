@@ -241,11 +241,12 @@ One gate per stage. A stage is not complete until its gate is measured and repor
 | 5 | Limb-hold contact intervals and stable contact-state transitions | Target `[PILOT]`: temporal IoU, event F1, boundary error, false-contact time, risk-coverage, all to be set on validation data. |
 | 6 | Attempts, moves, beta sequences, fall events | Target `[PILOT]`: normalized sequence edit distance against adjudicated beta, to be set on validation data. |
 | 7 | Descriptive aggregates (durations, dwell, adjustment counts, transition failure hazard) | Target `[PILOT]`: support threshold below which the aggregate returns `insufficient_data`, to be set on validation data. |
-| 8 | Comparison of repeated attempts | Target `[PILOT]`: to be defined once Stage 7 aggregates are measured. Scope is provisional. |
+| 8 | Minimal application surface: upload/job API, web review timeline, correction workflow, repeated-attempt comparison as a view over Stage 6 and 7 output, consent and retention controls | **Workflow gate, not accuracy-shaped.** Stages 1 through 7 have passed their gates first; the surface exposes only validated primitives, each carrying its provenance; corrections are captured append-only; consent and retention controls are exercised. No mobile app until real web usage validates the workflow. |
 
-Every accuracy-shaped gate for Stages 2 through 8 is a **target to be set on validation data**.
-None is a claim, a result or a commitment. No accuracy, F1, IoU or PCK number appears anywhere
-in this repository as an achieved value.
+Every accuracy-shaped gate for Stages 2 through 7 is a **target to be set on validation data**.
+None is a claim, a result or a commitment. Stage 8's gate is a **workflow** gate and carries no
+accuracy target. No accuracy, F1, IoU or PCK number appears anywhere in this repository as an
+achieved value.
 
 ## 10. Output-to-primitive mapping
 
