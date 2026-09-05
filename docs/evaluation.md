@@ -19,12 +19,22 @@ being measured now.
 | --- | --- | --- | --- |
 | Max reprojection error | **Integer milli-wall-units** | The single worst fiducial correspondence used to fit the calibration | Reported, not thresholded |
 | RMS reprojection error | **Integer milli-wall-units** | The same correspondences, pooled | Reported, not thresholded |
-| Hold-polygon self-agreement IoU | Unitless ratio | Two blind tracings of the same hold by the same annotator, on a re-traced subset, per `WallSet` | `[PILOT]` |
+| Grid round-trip mismatches | Count | Every hold position the system reports on a **known board**, converted back to its board grid coordinate | Exactly `0` `[FIXED]`, deterministic. **`not_applicable` on a general wall**, where there is no grid |
+| Hold-polygon self-agreement IoU | Unitless ratio | Two blind tracings of the same hold by the same annotator, on a re-traced subset, per `WallSet` | `[PILOT]` on a general wall. **`not_applicable`** when the hold map comes from a board definition |
 | Mask IoU | Unitless ratio | Per predicted hold mask against its adjudicated mask, on the wall reference image | `[PILOT]`, **`not_applicable` until a segmenter is adopted** |
 | Mask AP | Unitless ratio | Averaged over IoU thresholds, per `WallSet` | `[PILOT]`, **`not_applicable` until a segmenter is adopted** |
 
 Reprojection error is reported in **integer milli-wall-units** because no field may be
 float-typed (`data-schema.md` Section 7).
+
+**Known-board branch** (`mvp-contract.md` Section 1). When the hold map comes from a **versioned
+board definition**, the correspondences used to fit the calibration are the board's own known grid
+positions, so reprojection error is measured **against a known geometry** rather than against
+hand-placed fiducials. It stays reported, not thresholded. The **grid round-trip is deterministic
+and exact**: a reported hold position that does not convert back to the grid coordinate it came
+from is a defect, not a wide error. On this branch **hold-polygon self-agreement is
+`not_applicable`**, with that reason recorded, because there is no tracing whose stability could
+be measured.
 
 The two mask metrics apply **only once a segmenter is adopted by an explicit decision.** The hold
 map is user-confirmed by contract, so until that decision they are recorded as `not_applicable`,
@@ -35,7 +45,11 @@ Self-agreement IoU measures the stability of one annotator's tracing, not model 
 **never** reported as inter-annotator agreement (`annotation-guide.md` Section 6).
 
 Mask metrics are reported per `WallSet` as well as pooled: a model that works on one gym's hold
-colours and fails on another's is not visible in a pooled number.
+colours and fails on another's is not visible in a pooled number. **That motivating reason is a
+general-wall concern.** On the known-board branch the hold set is identical worldwide, so the
+failure it guards against cannot arise there. The **per-`WallSet` reporting rule still stands on
+both branches**: a set version is still a `WallSet` revision, and pooling across revisions would
+hide the same class of failure for a different reason.
 
 ### Stage 4 - pose
 
@@ -52,6 +66,14 @@ Keypoints labelled `occluded` or `out_of_frame` are excluded from the numerator 
 denominator, and their count is reported. Scoring a model on joints no annotator could see
 measures the annotation, not the model.
 
+**Overhang.** On the first measured envelope (`mvp-contract.md` Section 1) the panel overhangs and
+the climber hangs beneath it, so the **ends of the limbs are self-occluded far more often** than on
+a vertical wall, and the steeply upward camera foreshortens the top of the board. **Endpoint
+accuracy is expected to be harder here, and no number is offered for how much harder**: that is
+what the measurement is for. The reporting consequence: the **`occluded` and `out_of_frame`
+exclusion counts matter more on this envelope than on a vertical wall**, because a large excluded
+fraction leaves an endpoint PCK measured only on the frames where the limb end was easy to see.
+
 ### Stage 5 - contact intervals
 
 | Metric | Unit | Computed over | Target |
@@ -66,6 +88,12 @@ Risk-coverage exists because abstention is a first-class output. A model that ab
 cases and is accurate on the rest is more useful than one that guesses everywhere at the same
 pooled accuracy, and only a risk-coverage curve shows the difference.
 
+**MVP scope is hands only** (`mvp-contract.md` Section 5). Every metric above is reported for the
+**left-hand and right-hand slices**. The **foot slices are `not_applicable`, with the reason
+recorded** - not absent, not zero, not a failure. They are **deferred, not deleted**: the
+definitions above stand unchanged and apply the moment feet are predicted. A foot on which nothing
+was predicted is `unknown`, **never `none`**.
+
 ### Stage 6 - beta sequences
 
 | Metric | Unit | Computed over | Target |
@@ -75,10 +103,15 @@ pooled accuracy, and only a risk-coverage curve shows the difference.
 Reported **separately for the limb-aware and limb-agnostic forms** (`mvp-contract.md`
 Section 6). The two are not comparable and must never be pooled into one number.
 
+**MVP scope is hands only** (`mvp-contract.md` Section 5), so the **limb-aware form is over two
+limbs, the left hand and the right hand** - not four. Say so wherever the number is reported: a
+two-limb limb-aware distance read as a four-limb one overstates what was compared.
+
 ### Stage 7 - descriptive aggregates
 
-Move duration, contact dwell, hesitation observations, foot-adjustment counts and transition
-failure hazard are **descriptive statistics, not predictions.** They are reported with:
+Move duration, contact dwell, hesitation observations, foot-adjustment counts (**`not_applicable`
+for the MVP**, see below) and transition failure hazard are **descriptive statistics, not
+predictions.** They are reported with:
 
 - their unit (durations are **integer microseconds**);
 - their coordinate space where geometric;
@@ -89,6 +122,13 @@ failure hazard are **descriptive statistics, not predictions.** They are reporte
 not return a value with a wide interval, and it does not return a point estimate with a
 disclaimer. A number that should not be read must not be printed.
 
+The **foot-adjustment count** applies only once feet are predicted. The MVP predicts hands only
+(`mvp-contract.md` Section 5), so until that changes it is recorded as `not_applicable` with that
+reason, which is neither zero nor a failure: a count over events nobody observed is undefined, not
+empty. It is **deferred, not deleted** - the definition stands and applies the moment feet are
+predicted. Move duration, contact dwell, hesitation observations and the transition failure hazard
+are reported over the **hand** configurations the MVP does predict.
+
 ---
 
 ## 2. Split and leakage policy
@@ -97,6 +137,7 @@ disclaimer. A number that should not be read must not be printed.
 | --- | --- |
 | Group-aware splits | Grouped on **participant and problem simultaneously**. The same climber never straddles a split; the same problem never straddles a split. The participant clause is qualified by the next row. |
 | Single-participant releases | The participant clause applies to **multi-participant releases**. A single-participant release must **explicitly declare** `participant: accepted_single_participant` in its release manifest, and the leakage test **fails** if it declares neither that nor `none` for that key. Every number measured on such a release carries the caveat that it supports **within-climber claims only** and estimates nothing about other climbers. |
+| Standardized-board releases | On the first measured envelope (`mvp-contract.md` Sections 1 and 8) the **wall and gym terms of that caveat weaken to a board type**: the board is standardized, so a number measured on one board is **plausibly informative** about another board of the same type. This is a statement about the envelope, **not a demonstration**. Transfer has not been shown, and showing it requires measuring on a second board. **The single-climber term does not weaken at all.** |
 | Frozen test set | Fixed once, evaluated **once**. |
 | Never tune on test | Model selection, threshold selection and prompt selection use validation data only. |
 | Leakage is **tested**, not assumed | Named tests assert no participant ID and no problem ID appears in more than one split, and that no asset SHA-256 appears in more than one split. |

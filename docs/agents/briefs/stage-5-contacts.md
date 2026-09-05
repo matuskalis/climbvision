@@ -131,6 +131,13 @@ single-lighting-condition measurement on one camera placement. It bounds whether
 works here. It says nothing about a different climber, a different gym or a different camera, and
 no report or status entry may imply otherwise.
 
+On the **first measured envelope** (`mvp-contract.md` Sections 1 and 8) the **wall and gym terms
+weaken to a board type**: the board is standardized, so a number measured on one board is
+**plausibly informative** about another board of the same type. That is an argument from the
+envelope and **not a demonstration** - transfer has not been shown, and showing it requires
+measuring on a second board. **The single-climber term does not weaken at all**, and neither does
+the single lighting condition or the single camera placement.
+
 ### 0.6 Report format and stop condition
 
 The implementer's final report is **exactly** these six items, in this order:
@@ -167,24 +174,47 @@ The full index of open decisions is in `docs/agents/README.md`.
 ## 1. Mission
 
 Predict per-limb **contact intervals** with an **interpretable geometry-and-time baseline, before
-any learned model.** Targets are `hold`, `volume`, `wall_region`, `none` and `unknown`, for left
-and right hand and foot.
+any learned model.** The MVP predicts the **left hand and the right hand only**; feet are
+**deferred, not deleted**, by the `hands-first-scope` decision (Section 7.4). Targets are `hold`,
+`volume`, `wall_region`, `none` and `unknown`, for the two hands.
 
 Evaluate **event F1 at three temporal-overlap levels**, **boundary errors**, **false-contact
-time**, **hands and feet as separate slices**, and a **risk-coverage curve**.
+time**, **hands and feet as separate slices** — the hand slices measured, the **foot slices
+`not_applicable` with the reason recorded** (Section 8.8) — and a **risk-coverage curve**.
 
 Consumes:
 
 | Input | From | Used for |
 | --- | --- | --- |
-| Anchor observations (palm and toe, with wall-plane points) | Stage 4 | The per-frame limb positions the geometry runs on |
+| Anchor observations (**palm**, with wall-plane points) | Stage 4 | The per-frame hand positions the geometry runs on. Toe anchors are produced by Stage 4 and **consumed by no code path here** (Section 7.4) |
 | Hold polygons and `Calibration` | Stage 3 | The wall-plane geometry the anchors are tested against |
 | Adjudicated contact annotations and release splits | Stage 2 | Ground truth, and which attempts are validation and which are the frozen test split |
 
-Does **not** do: intentional-versus-incidental labelling (a human decision by contract), move
-segmentation or beta sequences (Stage 6), aggregates (Stage 7), or any learned model. There is no
-model at Stage 5, by design: an interpretable baseline first establishes what geometry alone can
-do, so a later learned model has something to beat that is not zero.
+Does **not** do: **foot contacts** (Section 7.4), intentional-versus-incidental labelling (a human
+decision by contract), move segmentation or beta sequences (Stage 6), aggregates (Stage 7), or any
+learned model. There is no model at Stage 5, by design: an interpretable baseline first establishes
+what geometry alone can do, so a later learned model has something to beat that is not zero.
+
+### 1.1 The measured envelope
+
+The MVP is measured on a **standardized LED training board**: a flat panel hung at a fixed angle,
+holds bolted at fixed positions on a grid the **board definition declares** - an **11-column by
+18-row** grid `[FIXED]` for the board type measured here
+(`docs/agents/briefs/stage-3-wall-and-holds.md` Section 8.1) - the same panel and the same hold
+positions in every installation worldwide, with a per-hold LED marking which holds belong to the
+problem (`mvp-contract.md` Section 1, which fixes the envelope and states no board's geometry).
+This is the commercially standardized board class; a Kilter- or Moonboard-style panel is the
+familiar instance of it. **The contract stays
+general.** The board is the **first measured envelope**, not a narrowing of what the contract may
+describe, and every number this stage produces is a number about this board.
+
+Three properties of that envelope are load-bearing for this brief:
+
+| Property of the envelope | Consequence for Stage 5 |
+| --- | --- |
+| The problem's holds are lit, typically **8 to 15** of them `[PLANNING]`, out of the grid's fixed positions | The candidate set is small, sparse and enumerable, not a dense spray wall. Section 8.10 |
+| The panel is steeply overhung and the camera shoots upward from beneath it | The climber's body occludes its own limbs far more than on a vertical wall, and the anchors this stage consumes degrade accordingly. Section 8.11 |
+| Hold positions are identical between installations | A radius selected on this board is selected against a fixed geometry rather than against one gym's setting. It still says nothing about a different board angle, a different camera placement or a different climber (Section 0.5) |
 
 ## 2. Preconditions
 
@@ -192,7 +222,7 @@ The agent does not start until every row holds. If a row does not hold, stop and
 
 | Precondition | Evidence it holds |
 | --- | --- |
-| The Stage 4 gate is recorded, **including endpoint accuracy with its interval** | A Stage 4 row and measured-evidence table in `docs/status.md`. Endpoint accuracy without its interval is not evidence; the anchors this stage runs on are only as good as that number, and its interval is what says how much to trust the contact numbers. |
+| The Stage 4 gate is recorded, **including palm endpoint accuracy with its interval** | A Stage 4 row and measured-evidence table in `docs/status.md`. Endpoint accuracy without its interval is not evidence; the anchors this stage runs on are only as good as that number, and its interval is what says how much to trust the contact numbers. **The palm number is the one that gates this stage**, because the MVP consumes palm anchors only (Section 7.4). A toe endpoint number, where Stage 4 measured one, is recorded and not consumed, and the two are never pooled into one endpoint figure. |
 | A calibration exists **whose hull coverage is reported** | The Stage 3 calibration document plus the reported fiducial hull coverage. The hull is what the inside/outside slice is computed against; without it the slice cannot be built. |
 | Adjudicated contact annotations exist for **all released attempts** | `adjudicated_ground_truth` provenance on every contact interval in the release, not a subset |
 | The millimetres-per-wall-unit scale is known, **or** every millimetre-denominated threshold explicitly abstains | The `wall-plane-units-and-scale` decision under `docs/adr/`. **Note:** every Stage 5 threshold is denominated in **milli-wall-units**, not millimetres, so the thresholds themselves are selectable without the scale. The scale is needed only to *report* a radius in physical units, and any such report reads `unknown` until the scale is closed. |
@@ -202,15 +232,17 @@ The agent does not start until every row holds. If a row does not hold, stop and
 **None new.** All annotation was done at Stage 2. Stage 5 does not ask for a single new label, a
 single new trace, or a single new frame of video.
 
-The owner's only job is to approve one decision:
+The owner approves one decision, and one further decision is **already approved** and needs only
+its record written:
 
 | Slug | What the owner approves |
 | --- | --- |
 | `contact-threshold-selection-protocol` | Thresholds are swept on **validation only**; the chosen values are written into `configs/contacts/v1.json` with the sweep recorded in each threshold's `selection` string; and the **frozen test set is touched exactly once, at the end.** |
+| `hands-first-scope` | **Already approved.** The MVP predicts hand contacts only. The agent does not reopen it, does not widen it, and does not narrow it further: it writes the record (Section 7.4), implements the two-hand scope, and reports the foot slices as `not_applicable`. |
 
-That protocol is the whole of the owner's involvement, and it is the one thing an agent cannot be
-trusted to enforce on itself, because a sweep that quietly includes the test split produces a
-better-looking number and leaves no trace in the code.
+The threshold protocol is the whole of the owner's ongoing involvement, and it is the one thing an
+agent cannot be trusted to enforce on itself, because a sweep that quietly includes the test split
+produces a better-looking number and leaves no trace in the code.
 
 ## 4. Deliverables
 
@@ -230,9 +262,10 @@ the same change.
 | `src/climbvision/schema/contacts.py` | module | `ContactSeries`, `ContactEvent` |
 | `src/climbvision/schema/contact_run.py` | module | `ContactRun`, the Stage 5 run document (C5) |
 | `configs/contacts/v1.json` | config | Every Stage 5 threshold (C9) |
-| `docs/adr/contact-membership-space.md` | decision | Written first — it determines what the geometry module computes in |
-| `docs/adr/contact-target-scope.md` | decision | Written second — it determines what the baseline is allowed to emit |
-| `docs/adr/contact-threshold-selection-protocol.md` | decision | Written third, **before the first sweep runs** |
+| `docs/adr/hands-first-scope.md` | decision | Written first — it determines **which limbs exist** for every other decision in the stage |
+| `docs/adr/contact-membership-space.md` | decision | Written second — it determines what the geometry module computes in |
+| `docs/adr/contact-target-scope.md` | decision | Written third — it determines what the baseline is allowed to emit |
+| `docs/adr/contact-threshold-selection-protocol.md` | decision | Written fourth, **before the first sweep runs** |
 | `tests/fixtures/documents/contact_series.valid.json` | fixture | Golden document fixture |
 | `tests/fixtures/documents/contact_run.valid.json` | fixture | Golden document fixture |
 
@@ -248,8 +281,8 @@ Decision records are created **one at a time, at the moment each is made** (Sect
 | `tests/unit/test_scope_guard.py` | A **new** set `STAGE_FIVE_MODULES` beside `STAGE_ONE_MODULES` and `STAGE_FOUR_MODULES`; the inventory test asserts the union. **Do not extend an earlier stage's set.** Plus a **negative** test: no file under `climbvision/contacts/` imports anything outside the standard library and `climbvision` — no `numpy`, no `av`, no backend root |
 | `tests/unit/test_scope_guard.py` | The parsed dependency test asserts Stage 5 added **no** distribution and **no** optional group |
 | `src/climbvision/cli.py`, `tests/unit/test_cli.py` | Subcommands (proposed: `contacts`, `contacts-eval`, `contacts-sweep`); exit codes **0** ok, **1** operation failed, **2** usage, exactly as today; plus a test that `validate` accepts the two new documents **through `MODEL_REGISTRY`**, dispatching on `schema_id`, never on filename |
-| `docs/evaluation.md` | **No change.** Section 1 "Stage 5 — contact intervals" already defines temporal IoU, event F1, boundary error, false-contact time and risk-coverage, and fixes the three tIoU reporting levels. Cite it; do not restate it. |
-| `docs/mvp-contract.md`, `docs/data-schema.md`, `docs/annotation-guide.md` | **No change.** The ontology, the half-open convention and the occlusion rule are all already there. |
+| `docs/evaluation.md` | **No change.** Section 1 "Stage 5 — contact intervals" already defines temporal IoU, event F1, boundary error, false-contact time and risk-coverage, and fixes the three tIoU reporting levels. Cite it; do not restate it. Reporting an unattempted slice as `not_applicable` needs no new metric definition either: Section 1 already sets that precedent for the mask metrics before a segmenter is adopted. |
+| `docs/mvp-contract.md`, `docs/data-schema.md`, `docs/annotation-guide.md` | **No change by this stage.** The ontology, the half-open convention and the occlusion rule are all already there, and the **board envelope is recorded in the contract by its own amendment**, not by Stage 5. If the contract's envelope and Section 1.1 of this brief disagree on a fact, that is a defect: report it, do not resolve it silently (Section 0). |
 | `docs/status.md` | The Stage 5 row, plus a measured-evidence table shaped exactly like the Stage 1 one |
 | `README.md` | **The command rows only.** No claim about a stage that has not shipped. |
 | `.gitignore` | **No change expected.** `artifacts/` already covers the emitted documents and the sweep outputs. Confirm rather than assume. |
@@ -270,7 +303,7 @@ Field identifiers below are **proposals**. Every model carries
 | --- | --- | --- |
 | `event_id` | `str` | Deterministic from `(asset_id, limb, start_us, target_ref)`, so re-runs produce the same ids |
 | `asset_id` | `str` | `sha256-<64 hex>`, constrained by `ASSET_ID_PATTERN` |
-| `limb` | `Literal["left_hand", "right_hand", "left_foot", "right_foot"]` | Closed set |
+| `limb` | `Literal["left_hand", "right_hand", "left_foot", "right_foot"]` | Closed set. **Stays four-valued.** Feet are deferred, not deleted (Section 7.4), and narrowing the type would delete the vocabulary a later stage restores. The MVP **attempts** only the two hands, and that is recorded in `ContactSeries.attempted_limbs`, not in this type. |
 | `target_kind` | `Literal["hold", "volume", "wall_region", "none", "unknown"]` | The contact-target ontology, `mvp-contract.md` Section 5. A value outside the set is a defect, not a new category. |
 | `target_ref` | `str \| None` | The `HoldInstance` id, **scoped to its `WallSet` revision**. `null` for `none`, `unknown` and any abstained event. |
 | `contact_label` | `Literal["unknown"]` | **Fixed to `unknown`.** A `Literal` of one member, so the type system forbids anything else. |
@@ -295,6 +328,7 @@ Field identifiers below are **proposals**. Every model carries
 | `raw_document_sha256` | `str \| None` | C8. `null` **only** on the raw document itself. |
 | `config_version`, `config_sha256` | `str` | Two runs with different config are different runs |
 | `postprocess_order` | `str` | The recorded order, `[FIXED]`. See Section 8.6. |
+| `attempted_limbs` | `list[Literal[...]]` | The limbs this run **attempted to predict**, sorted in the declared order of the `limb` literal — left hand, right hand, left foot, right foot — so that the ordering is stated once and byte-identity is testable. For the MVP: exactly `left_hand` and `right_hand`. A limb absent from this list was **not attempted**; a limb present in it but with no event over some span was attempted and produced a result. Without this field, "no foot events" and "feet all off the wall" are the same bytes. |
 | `events` | `list[ContactEvent]` | |
 
 ### 5.3 The rule that keeps this stage inside the contract
@@ -309,6 +343,29 @@ distinction a **human annotation decision with an explicit `unknown` escape**
 
 A `Literal["unknown"]` is used rather than a validator, so the type system forbids the other two
 values and a future contributor cannot widen it by accident.
+
+### 5.4 The rule that keeps the deferred limbs honest
+
+**A limb the system did not attempt is `unknown`. It is never `none`.**
+
+`none` means "the limb is demonstrably not in contact" (`mvp-contract.md` Section 5). That is a
+**determinate claim about the world**, and the MVP has no evidence for it about a foot, because it
+never looked. Turning "we did not attempt it" into "it was not touching anything" is the exact
+coercion standing rule 1 forbids — `unknown` is not `false`, missing propagates as missing — and
+it is the single most likely way this stage's scope cut would become a lie in the data.
+
+Concretely, and each clause is separately testable:
+
+| Rule | Enforcement |
+| --- | --- |
+| No event for a limb outside `attempted_limbs` may carry `target_kind = "none"` | Section 10.11, gate clause D10 |
+| Nor `target_kind = "hold"`, `"volume"` or `"wall_region"`: a determinate **positive** claim about an unattempted limb is the same defect in the other direction | Section 10.11, gate clause D10 |
+| Any event emitted for an unattempted limb carries `target_kind = "unknown"`, `target_ref = null`, `status = "abstained"` | Section 10.11 |
+| The **absence** of foot events is not left to inference: `attempted_limbs` states it (Section 5.2) | Section 10.11, C7 |
+
+The stage may emit no foot events at all, which is the simplest compliant behaviour. What it may
+**not** do is emit a foot event that asserts a determinate contact state, or leave a reader to
+infer "not in contact" from silence.
 
 ## 6. Decisions already frozen
 
@@ -335,8 +392,8 @@ Do not reopen any of these. Cite them; do not restate them.
 
 ## 7. Open decisions
 
-Three decisions close at Stage 5, by slug: `contact-threshold-selection-protocol`,
-`contact-membership-space`, `contact-target-scope`.
+Four decisions close at Stage 5, by slug: `hands-first-scope`,
+`contact-threshold-selection-protocol`, `contact-membership-space`, `contact-target-scope`.
 
 ### 7.1 `contact-threshold-selection-protocol`
 
@@ -373,11 +430,45 @@ That last clause is the whole point of the decision. Excluding a target the syst
 makes the metric measure a narrower problem than the one the product has, and the narrowing is
 invisible in the number. Counting it as a loss reports a **known, quantified gap** instead.
 
+### 7.4 `hands-first-scope`
+
+**Approved by the owner (Section 3). The MVP predicts hand contacts only. Feet are deferred.**
+
+This is a **scope decision, taken on the merits of the measurement**, and the record must say so
+rather than assert it. Two substantive reasons, neither of which is annotation cost:
+
+| Reason | What it means on this envelope |
+| --- | --- |
+| **Foot visibility is worst exactly here.** Foot visibility was already the weakest measurement in the pipeline. On a steeply overhung panel the climber hangs beneath the wall, so the body occludes its own feet far more than on a vertical wall, and the camera shoots steeply upward into that occlusion. The envelope makes the weakest input weaker. | The toe anchors from Stage 4 would be abstained or badly placed over a large fraction of every attempt, and a contact interval built on them would be measuring the anchor, not the contact. |
+| **The foot target is poorly defined here.** Footwork on these boards is genuinely unconstrained: climbers smear on bare plywood between the holds, and many problems place no constraint on the feet at all. | The **ground truth itself is weak**, not merely the prediction. There is no stable answer for an annotator to give on a smear that belongs to no hold, so a foot event scored against it would be scoring disagreement about the question. |
+
+**Deferring a target whose ground truth is weak is an honest scope decision. Measuring it anyway
+would produce a number nobody should read** — an accuracy figure whose denominator is a label the
+annotation guide cannot pin down. That is the reasoning the record carries.
+
+What the decision does **not** do:
+
+- It does not remove `left_foot` or `right_foot` from the limb vocabulary (Section 5.1).
+- It does not remove the hands-versus-feet slice (Section 8.8).
+- It does not remove the per-foot threshold overrides (Section 8.9).
+- It does not license `none` for a foot. See Section 5.4, which is the rule this decision is most likely to be violated through.
+
+| What the record states |
+| --- |
+| The MVP-attempted limb set: `left_hand`, `right_hand` |
+| The two reasons above, as reasons about **measurement**, not about effort |
+| That the foot machinery — vocabulary, slices, threshold overrides — is **retained**, and why |
+| That every foot slice is reported `not_applicable` with the reason, and never as zero, absent or failed |
+| That restoring feet requires: a re-measured foot visibility rate on this envelope, an annotation rule for smears on bare board surface, and its own selection run for the foot radii |
+
 ## 8. Approach
 
-### 8.1 Per frame, per limb
+### 8.1 Per frame, per attempted limb
 
-Take the Stage 4 anchor, projected into the wall plane. Then:
+Runs for the **left hand and the right hand**. It does not run for a foot, and there is no code
+path that produces a determinate foot result (Sections 5.4 and 7.4).
+
+Take the Stage 4 palm anchor, projected into the wall plane. Then:
 
 | Anchor state | Behaviour |
 | --- | --- |
@@ -396,7 +487,8 @@ That is a rule-6 violation dressed up as precision.
 
 ### 8.2 Exact integer point-to-polygon geometry
 
-For each hold on the problem's wall, compute the anchor's relationship to the polygon.
+For each hold **on the problem** — on this envelope, its lit holds (Section 8.10) — compute the
+anchor's relationship to the polygon.
 
 **Insideness, by even-odd ray cast on integers.** For each edge `(x1,y1) → (x2,y2)` and point
 `(px,py)`:
@@ -473,6 +565,12 @@ winner; this declines. On a dense wall, two small holds a few centimetres apart 
 usable radius of each other, and the margin abstention is the only thing that stops the system
 confidently naming the wrong one.
 
+**On the board envelope this rule fires less often**, because the lit candidates sit on a fixed
+grid and are sparser than the neighbours on a spray wall (Section 8.10). That is a property of the
+equipment, not a property of the method, and the report must say so: a low ambiguity-abstention
+rate measured here is **not** evidence that the abstention rule could be dropped elsewhere. Keep
+the rule, keep the threshold, and report the rate.
+
 The distance comparison is done on integers: define `dist_floor(h) = isqrt(d2.num // d2.den)`,
 an exact deterministic integer function, and test
 `abs(dist_floor(h1) - dist_floor(h2)) < min_target_margin_milli_wall_units`.
@@ -492,10 +590,11 @@ therefore three zones, not two:
 
 | Zone | Value |
 | --- | --- |
-| Within the attach radius of exactly one hold, by more than the target margin | That hold |
-| Within the attach radius of two or more holds, inside the target margin | `unknown`, abstained |
+| Within the attach radius of exactly one of the problem's holds, by more than the target margin | That hold |
+| Within the attach radius of two or more of the problem's holds, inside the target margin | `unknown`, abstained |
 | Beyond the attach radius but within the definite-none margin of some hold | `unknown` |
-| Beyond the definite-none margin of **every** hold | `none` |
+| Within the definite-none margin of a hold that is **present on the panel but not on this problem** | `unknown` — **never `none`** (Section 8.10) |
+| Beyond the definite-none margin of **every** hold present on the panel | `none` |
 
 ### 8.6 Raw first, then post-processing, in a recorded order
 
@@ -530,13 +629,25 @@ Report, **never pooled together**:
 | Event F1, **target-aware** | At each of tIoU `0.1`, `0.3`, `0.5` `[FIXED]` |
 | Event F1, **target-agnostic** | At each of the same three levels |
 | Boundary error | Integer **quantiles**, plus minimum and maximum. Nearest-rank, **no interpolation** — interpolation produces floats. |
-| False-contact time | Integer microseconds, **per limb** |
+| False-contact time | Integer microseconds, **per attempted limb** |
 
 And **every** metric sliced three ways:
 
-1. **Hands versus feet.**
+1. **Hands versus feet.** The **hand** slice is measured and reported. The **foot** slice reads
+   **`not_applicable`, with the reason recorded** — `"Feet are not attempted in the MVP; see the
+   hands-first-scope decision."` It is not absent, not zero and not a failure. `not_applicable` is
+   the same treatment `evaluation.md` Section 1 already gives the mask metrics before a segmenter
+   is adopted: the accuracy of something that was never attempted is **undefined, not bad**.
 2. **Inside versus outside the fiducial hull.**
-3. **Holds on volumes versus holds on the wall.**
+3. **Holds on volumes versus holds on the wall.** The board is a **flat panel**, so `volume`
+   targets are not expected to occur on this envelope at all. An **empty** slice also reads
+   `not_applicable` with its reason, never `0`, because a zero here would be read as a measurement.
+
+**Keep the slicing machinery in full.** Two reasons, and the second is the one that matters. It is
+needed unchanged when feet return, so deleting it now buys nothing and costs a re-measurement
+later. And **reporting a slice as explicitly not attempted is itself the honest output**: a report
+that simply has no foot row is indistinguishable from a report whose foot row was quietly dropped
+because it looked bad.
 
 **At full coverage, abstained predictions count as false negatives.** State this explicitly in the
 report. The alternative — dropping them from the denominator — makes abstention look free, makes
@@ -563,17 +674,83 @@ Into `configs/contacts/v1.json` (C9). Each entry carries `value`, `unit`, `statu
 | `release_radius_milli_wall_units.hand` / `.foot` | milli-wall-units |
 
 **Per-hand and per-foot overrides exist for every radius from the start**, because feet and hands
-almost certainly need different values (Section 13, trap 9) and retrofitting the seam later means
+almost certainly need different values (Section 13, trap 10) and retrofitting the seam later means
 re-running every measurement.
+
+**The foot overrides stay in the config, and stay unselected.** They are the seam that lets feet
+return without a config migration. Their `selection` strings read
+`"Not selected. Feet are not attempted in the MVP; see the hands-first-scope decision. No
+validation data exists."` — which is a different statement from "not swept yet", and the
+difference is exactly what a later reader needs. The **hand** overrides are the ones the sweep
+selects.
 
 **There is no fallback.** An override with no `value` is `CONFIG_THRESHOLD_MISSING`, not "use the
 base value". If hand and foot radii are meant to be equal, both entries carry the same number and
 both `selection` strings say why. A silent fallback hides the fact that the two were never
 separately selected.
 
-Every `selection` string reads
+Every other `selection` string reads
 `"Not selected. [PILOT] placeholder; no validation data exists."` until the sweep is run and
 recorded in `docs/status.md`.
+
+### 8.10 What the board makes easier
+
+**The contact-target vocabulary collapses to a small closed set.** On this envelope a hand is on
+one of the **problem's lit holds**, on the **board surface** between them, on **nothing**, or the
+observation does not say — that is, `hold` restricted to the lit set, `wall_region`, `none`,
+`unknown`. `volume` does not occur on a flat panel. The candidate hold set for a problem is
+**typically 8 to 15 holds** `[PLANNING]`, enumerated by which LEDs are lit, rather than every hold
+on a wall.
+
+This does **not** widen what the baseline emits. `wall_region` remains abstained by
+`contact-target-scope` (Section 7.3), and its annotated time is still counted against the
+baseline as a known, quantified gap rather than excluded.
+
+Two consequences follow, and both belong in the report:
+
+| Consequence | Why it follows | What to report |
+| --- | --- | --- |
+| **Ambiguity abstention fires less often.** Candidates sit on a fixed grid and are sparse; two lit holds are rarely inside each other's attach radius, unlike two adjacent holds on a dense spray wall | Geometry of the equipment, not quality of the method | The measured ambiguity-abstention rate, **stated as a property of this envelope**. A low rate here is not evidence about a spray wall (Section 8.4) |
+| **"The system named a hold that is not on this problem" is a free correctness check.** The lit set is known before any annotation exists, so every emitted `target_ref` can be tested for membership in it | The problem definition already enumerates its holds; no human labels a single frame for this check | The count of emitted events whose `target_ref` is **outside** the problem's lit hold set. It is a **deterministic** clause (D9), not a `[PILOT]` one, and its correct value is **zero** |
+
+The off-problem check is cheap and it is not a substitute for the F1: naming a **wrong lit hold**
+passes it. It bounds one specific failure mode — the geometry reaching a hold that the problem
+does not contain — at zero annotation cost, which is why it is worth a gate clause of its own.
+
+**The restriction carries one obligation with it.** On this envelope every grid position holds a
+physical hold, lit or not, so a hand on an **unlit** hold is genuinely in contact with something.
+Restricting the **target** vocabulary to the lit set must not be allowed to turn that into `none`,
+which asserts "demonstrably not in contact" (`mvp-contract.md` Section 5) about a hand that is
+demonstrably on a hold. The unlit holds therefore participate in the `definite_none_margin` test
+of Section 8.5 as **`none`-suppressors only**: proximity to one yields `unknown`, and an unlit
+hold is **never** emitted as a `target_ref`. Their positions come from the panel's fixed grid, so
+this too costs no annotation.
+
+### 8.11 What the board makes harder
+
+**Self-occlusion is worse here than on a vertical wall.** The panel is steeply overhung, the
+climber hangs beneath it, and the camera shoots upward from below, so the body occludes its own
+limbs for longer and more often. That degrades the Stage 4 anchors this stage consumes, and it
+lands on two places in the design:
+
+| Expectation | Consequence |
+| --- | --- |
+| The **abstention rate is higher** than it would be on a vertical wall | More time is spent in the abstained-anchor row of Section 8.1, and the risk-coverage curve is the report's most informative artifact rather than a formality |
+| The **occlusion-bridge threshold matters more** | `max_occlusion_bridge_us` decides how much of that occluded time is held through and how much becomes `unknown`. On this envelope it is a load-bearing threshold, not a tidy-up |
+
+**Both statements are directions, not numbers.** No expected abstention rate is stated here,
+because none has been measured, and a plausible-looking figure in a brief is indistinguishable
+from a result once someone quotes it. The requirement is that both are **measured and reported**:
+
+- the abstention rate **per hand**, with the share attributable to occlusion bridging separated
+  from the share attributable to ambiguity (Section 8.4) — gate clause P5;
+- the sensitivity of the abstention rate to `max_occlusion_bridge_us` across the sweep grid, on
+  **validation only**, so the threshold's `selection` string records what it was trading.
+
+If the measured abstention rate makes the contact numbers unusable, that is a **result about this
+envelope** and it is reported as one. It is not a reason to shorten the bridge until the number
+improves, which would move an occlusion into an `unknown` and then into a shorter interval without
+observing anything new.
 
 ## 9. Dependencies
 
@@ -763,6 +940,39 @@ event. Assert that at full coverage:
 If dropping the abstention changes the number, the test fails. This is the clause that keeps
 abstention from being free.
 
+### 10.11 An unattempted limb never serializes a determinate value
+
+The input fixture is deliberately hostile: it carries **observed toe anchors** for both feet, in
+the wall plane, one of them **inside the attach radius of a hold**. Nothing in the data stops the
+geometry from running on them; only the scope decision does.
+
+| Assertion |
+| --- |
+| `attempted_limbs` is exactly `["left_hand", "right_hand"]`, in the declared limb order (Section 5.2) |
+| Over **every** event in **both** the raw and the filtered document, no event whose `limb` is `left_foot` or `right_foot` has `target_kind == "none"` |
+| Nor `"hold"`, `"volume"` or `"wall_region"`. A determinate **positive** claim about an unattempted limb is the same defect facing the other way |
+| Any foot event that exists at all has `target_kind == "unknown"`, `target_ref is None`, `status == "abstained"` |
+| A hand-authored `ContactSeries` fixture containing a foot event with `target_kind = "none"` **fails validation**, through a model validator on `ContactSeries` that asserts the invariant across `attempted_limbs` and `events`, surfacing as `DOCUMENT_INVALID` from `climbvision validate`. No new error code |
+| The assertion runs against the **parsed round-trip** of the canonical bytes, not against the in-memory model alone: the rule is about what serializes |
+
+Both documents are checked, not just the filtered one. A coercion that appears only in the raw
+interval set is still a coercion, and the raw document is the one truth rule 4 exists to preserve.
+
+### 10.12 The named hold is always on the problem
+
+The problem's lit hold set is `{H1, H2, H3}`. The panel also carries `H9` at a neighbouring grid
+position, **not lit**, whose polygon lies within the attach radius of the anchor.
+
+| Anchor | Expected |
+| --- | --- |
+| Inside `H1`'s polygon | `target_ref = H1`, `status = "predicted"` |
+| Inside `H9`'s polygon, and beyond the definite-none margin of `H1`, `H2` and `H3` | `target_kind = "unknown"`. **Not `H9`** — it is not on the problem. **Not `none`** — the hand is on a hold (Sections 8.5, 8.10) |
+| Beyond the definite-none margin of every hold on the panel, lit or unlit | `none` |
+
+Plus a set-level assertion over a real asset for gate clause D9: every emitted `target_ref` is a
+member of the problem's lit hold set, scoped to its `WallSet` revision. The expected count of
+violations is **zero**, and the count is reported whether or not it is zero.
+
 ## 11. Gate
 
 ### 11.1 Deterministic clauses — all must pass
@@ -776,7 +986,9 @@ abstention from being free.
 | D5 | Occlusion **never** produces `none` — demonstrated on the Section 10.4 fixture and asserted over the full emitted set on a real asset |
 | D6 | Every threshold lives in versioned config with a **unit** and a **selection** string, and **no threshold is hardcoded** — enforced by a grep test over `src/climbvision/contacts/` for bare integer literals in comparison positions |
 | D7 | Re-running on identical inputs produces **byte-identical** documents |
-| D8 | Metrics reported **per slice**, with **no pooled-only number** anywhere in the report |
+| D8 | Metrics reported **per slice**, with **no pooled-only number** anywhere in the report, and the **foot slices present and reading `not_applicable` with their reason** — absent is a failure, `0` is a failure |
+| D9 | **No emitted `target_ref` lies outside the problem's lit hold set**, scoped to its `WallSet` revision — asserted on the Section 10.12 fixture and over the full emitted set on a real asset. Expected count zero, reported either way |
+| D10 | **An unattempted limb never carries a determinate target.** No foot event with `target_kind` in `{none, hold, volume, wall_region}` in the raw or the filtered document, and a fixture that contains one fails validation (Section 10.11) |
 
 ### 11.2 `[PILOT]` clauses — measured and reported, not thresholded
 
@@ -784,10 +996,13 @@ abstention from being free.
 | --- | --- | --- |
 | P1 | Event F1 at tIoU `0.1`, `0.3`, `0.5`, in **both** the target-aware and target-agnostic variants, on the **frozen test split** | Six exact rationals, each with its interval |
 | P2 | Boundary-error distribution | Integer quantiles **plus minimum and maximum**, in microseconds |
-| P3 | False-contact time | Integer microseconds, **per limb** |
+| P3 | False-contact time | Integer microseconds, **per attempted limb** — left hand and right hand, separately |
 | P4 | Risk-coverage curve over the **geometric margin** | Coverage and error rate as pairs of exact rationals, ordered by margin with ties broken by `event_id` |
+| P5 | **Abstention rate, per hand**, with the share attributable to **occlusion bridging** separated from the share attributable to **ambiguity** (Sections 8.4, 8.11) | Exact rationals. **No expected value is stated anywhere in this brief**; the direction — higher than a vertical wall would give — is an expectation to be checked against the measurement, never a substitute for it |
 
-Each of P1 through P4 is additionally reported for the three slices of Section 8.8.
+Each of P1 through P5 is additionally reported for the three slices of Section 8.8. The **hand**
+slice carries numbers; the **foot** slice reads `not_applicable` with its reason; the volume slice
+reads `not_applicable` if it is empty on this envelope.
 
 ### 11.3 The honest limitation, with the arithmetic shown
 
@@ -796,25 +1011,32 @@ This is a `[PLANNING]` calculation about **what the dataset can support**. It is
 | Step | Value | Tag |
 | --- | --- | --- |
 | Attempts in the release | roughly 50 | `[PLANNING]` |
-| Adjudicated contact intervals | on the order of 2000 to 3000 | `[PLANNING]` |
-| 95% normal-approximation half-width on 2500 intervals at `p ≈ 0.85`: `1.96 × sqrt(0.85 × 0.15 / 2500)` | `≈ 0.014`, i.e. **±1.4 percentage points** | `[PLANNING]` |
-| The same at `p = 0.5`, the worst case | `≈ 0.020`, i.e. **±2.0 percentage points** | `[PLANNING]` |
-| `(limb, hold)` cells | roughly 200 | `[PLANNING]` |
-| Intervals per cell | `2500 / 200 ≈ 12` | `[PLANNING]` |
+| Adjudicated contact intervals, **all four limbs** | on the order of 2000 to 3000 | `[PLANNING]` |
+| The **hands-only** subset of those, as an illustrative assumption of one half | roughly 1250 | `[PLANNING]` |
+| 95% normal-approximation half-width on 1250 intervals at `p ≈ 0.85`: `1.96 × sqrt(0.85 × 0.15 / 1250)` | `≈ 0.020`, i.e. **±2.0 percentage points** | `[PLANNING]` |
+| The same at `p = 0.5`, the worst case: `1.96 × sqrt(0.25 / 1250)` | `≈ 0.028`, i.e. **±2.8 percentage points** | `[PLANNING]` |
+| `(hand, lit hold)` cells per problem version: 2 hands by 8 to 15 lit holds | 16 to 30 | `[PLANNING]` |
+
+**The one-half assumption is an assumption, not a measurement.** Nobody has counted how the
+adjudicated intervals split between hands and feet on this envelope. Substitute the measured hand
+count as soon as Stage 2 reports it, and recompute; until then every half-width above is
+illustrative, and the direction of the error is known — a smaller hand subset widens it.
 
 **What that buys, and what it does not.**
 
-- A **pooled** event F1 to roughly ±1.5 percentage points `[PLANNING]`.
-- **Per-hold performance is unmeasurable.** A dozen intervals per cell cannot distinguish a hold the system handles well from one it handles badly.
-- **The independence assumption is wrong**, and it flatters the number. Intervals within one attempt are correlated. For anything that varies at the attempt level, the effective unit is the **attempt**, not the interval: at 50 attempts and `p ≈ 0.85` the half-width is `1.96 × sqrt(0.85 × 0.15 / 50) ≈ 0.099`, i.e. **±9.9 percentage points** `[PLANNING]`. Report both, and say which unit each number used.
-- **Feet will be worse than hands, and the feet slice is the smaller one.** The slice that most needs statistical power has the least of it.
-- Every number is **within-participant and within-gym** (Section 0.5).
-- **`volume` and `wall_region` targets are unpredicted by design** (Section 7.3). Their annotated time is reported as a **known, quantified gap**, in microseconds, not excluded.
+- A **pooled** event F1 over hands to roughly ±2 to ±3 percentage points `[PLANNING]`.
+- **Per-hold performance is unmeasurable.** How many intervals reach any one `(hand, lit hold)` cell depends entirely on how many attempts landed on that problem version, which is the same concentration precondition Stage 7 needs. Spread thinly across problems, no cell is measurable at all.
+- **The independence assumption is wrong**, and it flatters the number. Intervals within one attempt are correlated. For anything that varies at the attempt level, the effective unit is the **attempt**, not the interval: at 50 attempts and `p ≈ 0.85` the half-width is `1.96 × sqrt(0.85 × 0.15 / 50) ≈ 0.099`, i.e. **±9.9 percentage points** `[PLANNING]`. That figure does not improve by dropping feet — the attempt count is unchanged. Report both, and say which unit each number used.
+- **Feet are not attempted** (Section 7.4), so the foot slices carry **no support at all** — not low support, none. `not_applicable` is the only honest entry, and when feet return they need their own annotation, their own visibility measurement on this envelope and their own power calculation before any foot number means anything.
+- Every number is **within-participant, within-gym and on one board** (Section 0.5, Section 1.1).
+- **`volume` and `wall_region` targets are unpredicted by design** (Section 7.3). Their annotated time is reported as a **known, quantified gap**, in microseconds, not excluded. On a flat panel `volume` is expected to be empty, which is `not_applicable`, not zero.
 
 ### 11.4 What this stage does not prove
 
 - Nothing about **intentional use**. Load is not observable, and the baseline never claims it.
+- **Nothing about feet.** Not that foot contacts are hard, not that they are easy, not that they are rare: the MVP does not look at them (Section 7.4). A foot slice reading `not_applicable` is a statement about scope, not a result.
 - Nothing about a different climber, gym, camera placement or lighting condition.
+- **Nothing about a wall that is not this board.** A radius, a margin and a bridge threshold selected on a fixed grid under a fixed overhang are selected against that geometry. A spray wall changes the candidate density, and a vertical wall changes the occlusion (Sections 8.10, 8.11).
 - Nothing about performance outside the fiducial hull beyond what the hull slice measures.
 - Nothing about `volume` or `wall_region` targets, which the baseline abstains on entirely.
 - Nothing about what a **learned** model could do. The baseline sets a floor, not a ceiling.
@@ -866,7 +1088,7 @@ and sockets blocked. Report the count.
 
 ## 13. Traps
 
-Twelve. Each one has a specific, named consequence.
+Sixteen. Each one has a specific, named consequence.
 
 | # | Trap | Consequence if missed |
 | --- | --- | --- |
@@ -878,26 +1100,36 @@ Twelve. Each one has a specific, named consequence.
 | 6 | **Calibration error propagating.** A pixel-level error becomes a wall-plane error that **grows with distance from the fiducial hull** and lands directly on the attach radius. | Contacts far from the fiducials get systematically wrong radii. This is exactly what the inside/outside-hull slice diagnoses, which is why that slice is not optional. |
 | 7 | **Adjacent holds.** Two small holds a few centimetres apart on a dense wall are inside any usable radius of each other. | Without the margin abstention (Section 8.4), the system **confidently names the wrong hold**, and the target-agnostic F1 stays high while the target-aware F1 quietly drops. |
 | 8 | **Proximity is not use.** A hand hovering over a hold for a whole move is not a contact, and the baseline cannot tell the difference. | This is exactly why the baseline **never labels intentional use** (truth rule 9, `annotation-guide.md` Section 1). Any attempt to infer it from dwell time is a load claim from monocular RGB. |
-| 9 | **Feet are not small hands.** Toe anchors are less visible, more often occluded by the climber's own body, and often **behind volumes**. | They need **separate thresholds, separate slices and separate expectations**. A single pooled radius tuned on hands makes the feet numbers bad for a reason that is invisible in the pooled result. |
-| 10 | **Tuning on test.** | The sweep runs on **validation**; the frozen split is evaluated **once** (`mvp-contract.md` Section 8, `evaluation.md` Section 2). A number tuned on test is not a measurement, and the release cannot be un-contaminated afterwards. |
-| 11 | **Squaring destroys the sign.** Trying to carry a signed distance through a squared comparison. | Inside points come out looking far away. Carry `(inside, squared_distance)` as a pair; an inside point has effective squared distance zero. |
-| 12 | **Flooring the perpendicular distance.** `cross² / t_den` is a **rational**, not an integer. | Flooring it to fit an `int` breaks exactness at exactly the radius boundary the hysteresis is testing, so the "exact integer arithmetic" claim becomes false precisely where it matters. Carry the `RatioValue` and cross-multiply (C1, C2). |
+| 9 | **An unattempted foot coerced to a determinate value.** The single most likely way this stage's scope cut becomes a lie in the data: "we did not attempt it" serializing as "it was not touching anything". It arrives disguised as tidiness — a default, an empty target, a `None` that dumps as `"none"`. | A reader, a Stage 6 configuration and a Stage 7 count all take `none` as a **claim about the world**. The system asserts a foot was off the wall in frames where no code ever looked at that foot. Sections 5.4, 10.11, clause D10. |
+| 10 | **Feet are not small hands**, and the seam must survive their absence. Toe anchors are less visible and more often occluded, and on this envelope worst of all (Section 8.11). | Deleting the per-foot threshold overrides while feet are deferred means retrofitting the seam later and **re-running every measurement** to select the foot radii against a config shape that changed. Keep them, unselected, with the reason in the `selection` string (Section 8.9). |
+| 11 | **Dropping the foot slices instead of reporting them `not_applicable`.** | A report with no foot row is indistinguishable from a report whose foot row was removed because it looked bad. `not_applicable` **with the reason** is the output; absent and `0` are both defects, and `0` is the worse of the two because it reads as a measurement (Section 8.8, clause D8). |
+| 12 | **Reading the board's sparser candidates as an improvement in the method.** Ambiguity abstention fires less often here than it would on a spray wall. | It is a property of the **equipment**: lit holds sit on a fixed grid, far apart. Quoting the low rate as evidence that the abstention rule is unnecessary generalizes a fact about the panel into a claim about the algorithm, and the first dense wall it meets confidently names the wrong hold (Sections 8.4, 8.10). |
+| 13 | **`none` on an unlit hold.** The candidate set is restricted to the problem's lit holds, and the naive consequence is that a hand on any other hold is "far from every candidate", therefore `none`. | The system asserts "demonstrably not in contact" about a hand that is visibly on a hold. Unlit holds are `none`-suppressors and never targets: the answer there is `unknown` (Sections 8.5, 8.10, test 10.12). |
+| 14 | **Tuning on test.** | The sweep runs on **validation**; the frozen split is evaluated **once** (`mvp-contract.md` Section 8, `evaluation.md` Section 2). A number tuned on test is not a measurement, and the release cannot be un-contaminated afterwards. |
+| 15 | **Squaring destroys the sign.** Trying to carry a signed distance through a squared comparison. | Inside points come out looking far away. Carry `(inside, squared_distance)` as a pair; an inside point has effective squared distance zero. |
+| 16 | **Flooring the perpendicular distance.** `cross² / t_den` is a **rational**, not an integer. | Flooring it to fit an `int` breaks exactness at exactly the radius boundary the hysteresis is testing, so the "exact integer arithmetic" claim becomes false precisely where it matters. Carry the `RatioValue` and cross-multiply (C1, C2). |
 
 ## 14. Report format and stop condition
 
 As Section 0.6, with these stage-specific requirements:
 
-- The gate table has **one row per clause** from Sections 11.1 and 11.2 — eight deterministic, four `[PILOT]` — using the clause ids `D1`–`D8` and `P1`–`P4`. A clause whose data does not exist reads **`pending measurement`**.
+- The gate table has **one row per clause** from Sections 11.1 and 11.2 — ten deterministic, five `[PILOT]` — using the clause ids `D1`–`D10` and `P1`–`P5`. A clause whose data does not exist reads **`pending measurement`**.
 - **No pooled-only number appears anywhere.** Every `[PILOT]` number is accompanied by its hands/feet, inside/outside-hull, and volume/wall slices. A pooled number without its slices is a rejected report, not an incomplete one.
-- Both interval widths from Section 11.3 are reported — the interval-as-unit one and the attempt-as-unit one — with the unit named beside each.
+- **The foot slices appear in every table, reading `not_applicable` with the reason.** A report that omits them, or that prints `0`, is rejected on that ground alone (Section 8.8).
+- The **abstention rate per hand** is reported, split into its occlusion-bridging and ambiguity shares, together with a sentence saying whether it came out higher or lower than the vertical-wall expectation in Section 8.11 — and no expectation is reported as though it were the measurement.
+- The **count of emitted `target_ref`s outside the problem's lit hold set** is reported, whether or not it is zero (clause D9).
+- Both interval widths from Section 11.3 are reported — the interval-as-unit one and the attempt-as-unit one — with the unit named beside each, and the **measured hand share of the adjudicated intervals** substituted for the one-half assumption if Stage 2 has reported it.
 - The **annotated time on `volume` and `wall_region` targets** is reported, in integer microseconds, as a known quantified gap.
 - The **sweep** is reported: the grid searched, the metric optimized, the split, the release id, and the chosen values, matching the `selection` strings written into `configs/contacts/v1.json` byte for byte.
 - The report states, in one sentence, that the frozen test split was evaluated **once**, and names the command and the timestamp.
 
 The reviewer independently re-measures every clause rather than accepting the implementer's
 numbers: re-runs the commands, re-computes the F1 from the emitted documents against the
-adjudicated annotations, re-derives the risk-coverage curve, and independently checks that no
-`none` event exists over an occluded span.
+adjudicated annotations, re-derives the risk-coverage curve, independently checks that no `none`
+event exists over an occluded span, and independently checks the emitted documents for **any
+determinate target on a limb outside `attempted_limbs`** and for **any `target_ref` outside the
+problem's lit hold set**. Those last two are set-level greps over the artifacts, not a reading of
+the implementer's table.
 
 Then **stop** and wait for the owner's decision. Do not open Stage 6.
 

@@ -9,8 +9,9 @@ Tick every box. Why each box exists: [`00-operating-manual.md`](00-operating-man
 Do not put the tripod in the car until all of these are ticked.
 
 - [ ] Consent record written; its opaque id noted ([`04-consent-and-privacy.md`](04-consent-and-privacy.md))
-- [ ] Gym permission received **in writing**
-- [ ] The wall's next reset date is known and written down
+- [ ] Permission to film the board received **in writing**
+- [ ] Whether the board's hold set is scheduled to change is known and written down (on a general wall: the next reset date)
+- [ ] The board identifier and the board-definition version to be written in the log are to hand (manual 2.1, item 15)
 - [ ] Tripod packed
 - [ ] Phone packed
 - [ ] Charged battery or power bank packed
@@ -33,18 +34,21 @@ Do not put the tripod in the car until all of these are ticked.
 
 ## Part 2 — At the wall
 
-In this order.
+In this order. The board is an overhang, so steps 1 and 2 need more floor than instinct asks for
+(manual 3.1).
 
-- [ ] 1. Tripod placed; feet taped to the floor or photographed against a floor seam
-- [ ] 2. Framing checked: start holds, top hold and landing zone all inside the frame, with margin (manual 3.1)
+- [ ] 1. Tripod placed **further back and lower** than a vertical wall would need; feet taped to the floor or photographed against a floor seam
+- [ ] 2. Framing checked against a **test clip of yourself on the board**, not against the empty panel: the whole panel and your whole body inside the frame with margin, and the landing zone in frame **where a fall actually lands**, well out from the base (manual 3.1). An empty board fits any frame; the climber hanging off it is what overflows
 - [ ] 3. Exposure locked
 - [ ] 4. Focus locked
-- [ ] 5. **Clean reference still taken, with nobody on the wall**
+- [ ] 5. **Clean reference still of the empty board taken**, nobody on it, LEDs cleared if the board allows it
+
+Do **not** record the board's angle here. It belongs to the board definition, once (manual 3.1).
 
 Per problem:
 
-- [ ] 6. The gym's own tag photographed
-- [ ] 7. A copy of the wall photo marked up: which holds are on the problem, and each hold's role
+- [ ] 6. The problem's identity recorded as the board gives it - its name, and the set or list it belongs to - so its lit holds can be entered later (manual 3.6)
+- [ ] 7. The lit panel or the board's own display photographed, if either reads clearly
 
 Per attempt:
 
@@ -55,7 +59,7 @@ Per attempt:
 
 At the end of the session:
 
-- [ ] 12. **Second clean reference still taken, from the same tripod position**
+- [ ] 12. **Second clean reference still of the empty board taken, from the same tripod position**
 
 ---
 
@@ -85,10 +89,11 @@ local_time:
 utc_offset:
 
 gym_pseudonym:
-wall_pseudonym:
-facet_pseudonym:
-wall_set_id:
-next_reset_date:
+board_pseudonym:                # which physical board
+board_type:                     # the standardized board type
+board_definition_version:       # which definition the grid coordinates refer to
+wall_set_id:                    # the board's set version; problem identity is scoped to it
+set_change_expected:            # yes / no / unknown, from the permission reply
 
 camera_model:
 os_version:
@@ -101,21 +106,20 @@ exposure_and_focus_locked:      # yes / no
 
 tripod_distance:
 tripod_height:
-tripod_angle:
+tripod_angle:                   # the camera's angle. Not the board's
 floor_mark_photo:
 
 participant_pseudonym:
 consent_record_id:
 
-reference_still_before:         # filename
-reference_still_after:          # filename
+reference_still_before:         # filename, empty board
+reference_still_after:          # filename, empty board
 
 problems_filmed:
-  - gym_label:                  # the gym's own label for the problem
-    set_date:
+  - problem_name:               # the problem's identity, as the board gives it
+    problem_set:                # the set or list it belongs to, if the board shows one
     attempts:                   # count
-    tag_photo:                  # filename
-    holds_marked_photo:         # filename
+    identity_photo:             # filename, if the lit panel or the display was photographed
 
 clips:
   - filename:
@@ -140,8 +144,7 @@ Example
 Session and problem files
   s003__reference-before.jpg
   s003__reference-after.jpg
-  s003__prb-02__tag.jpg
-  s003__prb-02__holds-marked.jpg
+  s003__prb-02__identity.jpg
 ```
 
 1. A filename contains no real name.

@@ -27,6 +27,14 @@ Stages 2 through 8 have **not started**. No code, no data, no annotations and no
 for them. Their acceptance gates are in `mvp-contract.md` Section 9: `[PILOT]` targets for
 Stages 2 through 7, and a workflow gate for Stage 8.
 
+**Scope decision, 2026-09-05.** The MVP's **first measured envelope** is a **standardized LED
+training board** (`mvp-contract.md` Section 1), and the MVP predicts **hands only**
+(`mvp-contract.md` Section 5); foot contact targets remain defined and annotatable but are not
+predicted, and foot metric slices are `not_applicable` with their reason. The general envelope is
+unchanged and is not retired. **No evidence follows from this decision.** Stages 3 and 5 remain
+`not started`, no footage exists on any envelope, and no accuracy-shaped number has been measured
+here or anywhere.
+
 ---
 
 ## Stage 1 gate (measured, review passed)

@@ -30,13 +30,51 @@ a defect. Version identifiers and stage numbers are names, not thresholds, and a
 | Resolution | At least 1080p `[FIXED]` |
 | Frame rate | At least 30 fps `[FIXED]` |
 | Wall | One approximately planar wall facet |
-| Reference imagery | A clean wall image, or a usable reference frame from the recording |
-| Hold map | User-confirmed hold masks |
+| Reference imagery | A clean wall image, or a usable reference frame from the recording (on the first measured envelope, a clean still of the empty board; see "First measured envelope" below) |
+| Hold map | User-confirmed hold masks (on the first measured envelope the positions come from a versioned board definition instead; see "First measured envelope" below) |
 | Problem identity | Explicitly user-confirmed by the user |
 | Processing | Offline batch processing is acceptable |
 
 Envelope violations are recorded as three-valued quality flags, not rejections. The system
 degrades to `unknown` rather than guessing. Ingest hard-fails only on malformed input.
+
+### First measured envelope
+
+The envelope above is the **general target** and is not narrowed. What this subsection fixes is
+**where the first numbers are measured**: on a **standardized LED training board** - a flat panel
+at a **fixed angle**, holds at **fixed grid positions**, LEDs indicating which holds belong to a
+problem, and a **versioned board definition** supplying those positions. The equipment class is a
+MoonBoard-type training board, named once so the reader knows what is meant; no vendor product,
+service or interface is a dependency of this system.
+
+This is a **strict subset** of the general envelope, not a replacement for it. Every general
+condition still applies: exactly one climber `[FIXED]`, one static camera, no pan and no zoom,
+full body and full problem visible for the entire attempt, at least 1080p `[FIXED]`, at least
+30 fps `[FIXED]`, offline batch processing.
+
+| What the board adds | Consequence |
+| --- | --- |
+| Fixed grid positions in a versioned board definition | Hold positions come from the **board definition**, not from per-wall polygon annotation |
+| LED problem indication | Problem identity is a **user-confirmed set of lit holds**, not per-hold membership annotation |
+| A genuinely planar panel with no volumes | The parallax that makes volume-mounted holds unreliable **does not arise** |
+| The same problem on many identical boards | The repeated-attempt stages get repeats of one problem identity |
+| One board type rather than one wall | The wall and gym terms of the measurement caveat weaken to a **board type** (Section 8). **The single-climber term does not weaken at all.** |
+| A steep overhang | **Severe self-occlusion.** The climber hangs beneath the panel and hides the holds in use, and the camera shoots steeply upward with strong foreshortening toward the top of the board |
+| Footwork the board does not constrain | **Foot contact targets are poorly defined** on this envelope: climbers smear on plywood and many problems place no constraint on feet |
+
+The last two rows are **costs**, and they fall on the two weakest measurements: keypoint accuracy
+at the limb ends and foot visibility. They are the substantive reason the MVP predicts hands only
+(Section 5).
+
+**The lit-hold set is entered and confirmed by the user.** No board problem data is fetched from
+any service, and no such interface is assumed to exist. An import adapter is a **possible later
+addition behind an explicit decision**, never an assumption of this contract.
+
+**The board angle is a property of the board, not a per-recording input.** It is recorded once, as
+part of the board definition. A user never sets it per attempt.
+
+**The general envelope is not retired.** It remains the target. Returning to general walls requires
+**new measurements on that envelope**, not a new contract.
 
 ## 2. Explicitly unsupported / out of scope
 
@@ -136,6 +174,21 @@ Closed value sets. A value outside its set is a defect, not a new category.
 2. A **problem ID is scoped to a specific `WallSet` revision.** Holds get reset. The same wall
    with a new set is a new `WallSet`, and problem identities do not survive across revisions.
 
+### MVP prediction scope: hands only
+
+The MVP **predicts contacts for the left hand and the right hand only.** The four contact-target
+values and the four visibility values above are **unchanged**, and **foot contact targets remain
+fully defined and remain annotatable.** The MVP simply does not predict them.
+
+| Rule | Detail |
+| --- | --- |
+| A foot with no prediction is `unknown` | **Never `none`.** "Not attempted" silently becoming "not in contact" is exactly the coercion standing rule 1 forbids. |
+| A metric that was not attempted is `not_applicable` | Reported **with its reason**. Never a failure, never a zero, never a blank. |
+
+Feet are **deferred, not deleted.** The reason is substantive, not clerical: on the first measured
+envelope (Section 1) the board itself places no constraint on the feet, so a foot contact target
+is poorly defined there. Their definitions stand and apply the moment feet are predicted.
+
 ## 6. Definitions
 
 **Attempt.** A contiguous span of one recording in which the climber engages the confirmed
@@ -174,7 +227,11 @@ form it used; the two are not interchangeable.
 
 **Foot adjustment.** An observable foot release and recontact, or a change of foot contact
 target, that does not constitute a move by the definition above. It is a count of observed
-events, not an inference about intent or nerves.
+events, not an inference about intent or nerves. Under the MVP's hands-only prediction scope
+(Section 5) the **count is `not_applicable`**, with that reason recorded: the feet are not
+predicted, so no foot event is observed, and a count over events nobody observed is undefined
+rather than zero. The definition above is **deferred, not deleted**, and applies unchanged the
+moment feet are predicted.
 
 **Hesitation.** **Not a quality judgement.** ClimbVision records only explicit observations:
 dwell time in a stable configuration, and low-velocity intervals of the tracked joints. A dwell
@@ -223,6 +280,11 @@ recorded at ingest as a fact about the file.
   and the leakage test **fails** if the release declares neither that nor `none` for that key.
   Every number measured on such a release carries the caveat that it supports **within-climber
   claims only** and estimates nothing about other climbers.
+- On the **first measured envelope** (Section 1) the **wall and gym terms of that caveat weaken to
+  a board type**: the board is standardized, so a number measured on one board is **plausibly
+  informative** about another board of the same type. That is a statement about the envelope, not
+  a demonstration. **Transfer has not been shown**, and showing it requires measuring on a second
+  board. **The single-climber term does not weaken at all.**
 - The **test set is frozen** and evaluated **once**.
 - **Never tune on the frozen test set.** Model selection, threshold selection and prompt
   selection all happen on validation data only.
@@ -241,11 +303,11 @@ One gate per stage. A stage is not complete until its gate is measured and repor
 | --- | --- | --- |
 | 1 | Deterministic ingest: video to content-addressed manifest | **Real and measurable, executing now.** All tests and lint pass; schema round-trip succeeds; repeated ingest is idempotent; timestamp round-trip error is no greater than one source frame `[FIXED]`. Full statement in `evaluation.md`. |
 | 2 | Annotation harness, CVAT adapter, group-aware split manifests | Target `[PILOT]`: agreement on the contact ontology, to be set on validation data - **inter-annotator agreement where two or more annotators exist; otherwise blind intra-annotator test-retest consistency, reported as `self_agreement` and never as inter-annotator agreement** (`annotation-guide.md` Section 6). Leakage tests pass (deterministic, not `[PILOT]`). |
-| 3 | Wall calibration and confirmed hold map | Deterministic clauses (not `[PILOT]`): reprojection error reported in wall units; fiducial hull coverage reported; re-fitting identical inputs yields a byte-identical calibration. Target `[PILOT]`: hold-polygon **self-agreement IoU** on a re-traced subset, to be set on validation data. Model **mask IoU and AP are recorded as `not_applicable`** until a segmenter is adopted by an explicit decision; the hold map is user-confirmed by contract, so no segmenter is required to reach this gate. |
+| 3 | Wall calibration and confirmed hold map | Deterministic clauses (not `[PILOT]`), **both branches**: reprojection error reported in wall units; fiducial hull coverage reported; re-fitting identical inputs yields a byte-identical calibration. **Known board** (Section 1): the hold map comes from the versioned board definition, so the hold-polygon self-agreement clause is **`not_applicable`** with that reason, and one further deterministic clause applies - **every hold position the system reports round-trips to its grid coordinate**, mismatch count exactly `0` `[FIXED]`. **General wall**: target `[PILOT]`, hold-polygon **self-agreement IoU** on a re-traced subset, to be set on validation data. Model **mask IoU and AP are recorded as `not_applicable`** until a segmenter is adopted by an explicit decision; the hold map is user-confirmed by contract, so no segmenter is required to reach this gate. |
 | 4 | Climber pose trajectories | Target `[PILOT]`: PCK, including endpoint PCK for palm and toe anchors, to be set on validation data. |
-| 5 | Limb-hold contact intervals and stable contact-state transitions | Target `[PILOT]`: temporal IoU, event F1, boundary error, false-contact time, risk-coverage, all to be set on validation data. |
+| 5 | Limb-hold contact intervals and stable contact-state transitions | **MVP scope is hands only** (Section 5). Target `[PILOT]`: temporal IoU, event F1, boundary error, false-contact time, risk-coverage, all to be set on validation data, all reported for the **hand slices**. The **foot slices are `not_applicable` with the reason recorded** - not absent, not zero. |
 | 6 | Attempts, moves, beta sequences, fall events | Target `[PILOT]`: normalized sequence edit distance against adjudicated beta, to be set on validation data. |
-| 7 | Descriptive aggregates (durations, dwell, adjustment counts, transition failure hazard) | Target `[PILOT]`: support threshold below which the aggregate returns `insufficient_data`, to be set on validation data. |
+| 7 | Descriptive aggregates (durations, dwell, adjustment counts, transition failure hazard) | **MVP scope is hands only** (Section 5). Target `[PILOT]`: support threshold below which the aggregate returns `insufficient_data`, to be set on validation data. The **foot-adjustment count is `not_applicable` with the reason recorded** - not absent, not zero. |
 | 8 | Minimal application surface: upload/job API, web review timeline, correction workflow, repeated-attempt comparison as a view over Stage 6 and 7 output, consent and retention controls | **Workflow gate, not accuracy-shaped.** Stages 1 through 7 have passed their gates first; the surface exposes only validated primitives, each carrying its provenance; corrections are captured append-only; consent and retention controls are exercised. No mobile app until real web usage validates the workflow. |
 
 Every accuracy-shaped gate for Stages 2 through 7 is a **target to be set on validation data**.
@@ -260,7 +322,8 @@ Provenance classes: `prediction`, `preannotation`, `reviewed_annotation`,
 
 | Product output | Derived from | Provenance class | Stage |
 | --- | --- | --- | --- |
-| Hold map | Wall reference image, hold masks | `preannotation` -> `reviewed_annotation` (user-confirmed by contract) | 3 |
+| Hold map, **board envelope** (Section 1) | A versioned board definition, plus a calibration fitted to named grid positions | `derived`. Nobody traces or reviews an outline here; the human confirmation sits once on the board definition, which is recorded with its own per-value provenance | 3 |
+| Hold map, **general wall** | Wall reference image, hold masks | `preannotation` -> `reviewed_annotation` (user-confirmed by contract) | 3 |
 | Attempt list | Contact intervals, pose observations | `derived` | 6 |
 | Move list | Stable contact configurations over time | `derived` | 6 |
 | Beta sequence | Ordered attach/release contact events | `derived` | 6 |
@@ -269,7 +332,7 @@ Provenance classes: `prediction`, `preannotation`, `reviewed_annotation`,
 | Move duration | Move boundaries, integer microseconds | `derived` | 6 |
 | Contact dwell | Contact interval length, integer microseconds | `derived` | 5 |
 | Hesitation observation | Dwell and joint velocity, threshold `[PILOT]` | `derived` | 7 |
-| Foot-adjustment count | Foot contact events within an attempt | `derived` | 7 |
+| Foot-adjustment count | Foot contact events within an attempt | `derived`. **`not_applicable` under the hands-only MVP scope** (Section 5), with that reason recorded: no foot contact event is predicted, so there is nothing to derive from. Deferred, not deleted | 7 |
 | Transition failure hazard | Failures per transition aggregated over attempts | `derived`, from `adjudicated_ground_truth` outcomes | 7 |
 
 **Confidence never increases downstream.** An `abstained` or `unknown` upstream result can never

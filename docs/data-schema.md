@@ -23,6 +23,7 @@ model for an entity whose real structure is not yet known.
 | `HoldInstance` | One physical hold or volume in a `WallSet`, with a mask | 3 | no |
 | `ProblemVersion` | A problem as defined on a specific `WallSet` revision | 3 | no |
 | `ProblemHold` | Membership of a `HoldInstance` in a `ProblemVersion`, with its role | 3 | no |
+| `BoardDefinition` | A versioned definition of a standardized training board: its grid layout, its fixed hold positions and its angle | 3 | no |
 | `Recording` | One ingested video file and its container facts | **1** | **yes** |
 | `Calibration` | Mapping from image pixels to the wall plane | 3 | no |
 | `Attempt` | One engagement with a problem, per `mvp-contract.md` Section 6 | 6 | no |
@@ -48,6 +49,24 @@ second, three rows look contradictory against `mvp-contract.md` Section 9:
 
 `MetricValue` is at 2 for the same reason: Stage 2's own gate is a measured agreement number,
 and `MetricValue` is the output type of every evaluation from Stage 2 onward.
+
+**Known board.** On the first measured envelope (`mvp-contract.md` Section 1) the wall entities
+**do not change shape.** What changes is where their content comes from:
+
+| Entity | On a general wall | On a known board |
+| --- | --- | --- |
+| `WallSet` | Populated from per-wall polygon annotation | Populated from a **versioned `BoardDefinition`** |
+| `HoldInstance` | A traced mask on the wall reference image | Supplied by the board definition, carrying its **grid coordinate** |
+| `ProblemHold` | Per-hold membership annotated per problem | The **user-confirmed set of lit holds** |
+
+`BoardDefinition` is a **documented target, not a stub**, on the same terms as every other "no"
+row above. The **board angle belongs to the `BoardDefinition`**, not to a `Recording` and not to
+an attempt.
+
+**The board's physical dimensions, grid spacing and angle are not stated in this document.** They
+come either from the manufacturer's **published specification, cited**, or from the **owner's own
+measurement**, and whichever is used is **recorded with its provenance** (Section 5). A guessed
+dimension is worse than an absent one, because it will be copied.
 
 ## 2. Stage 1 entities (exist in code)
 
@@ -165,6 +184,7 @@ and per-run provenance separation.
 | --- | --- |
 | Asset ID | `sha256-<64 hex>` of the **raw file bytes**. Path, filename, mtime, permissions and location therefore **never** affect identity. The same video copied, renamed or moved is the same asset. |
 | Problem ID | **Scoped to a `WallSet` revision.** A reset produces a new `WallSet`; problem identities do not survive it. |
+| Board definition version | A `BoardDefinition` is **versioned**. A problem identified by a set of lit holds is **scoped to a board definition version**, exactly as a problem is scoped to a `WallSet` revision, so identities do not survive a version change. |
 | Participant and consent IDs | Opaque pseudonyms. Never derived from a name, an email or a path. |
 
 ## 4. Schema versioning
@@ -228,6 +248,12 @@ Canonical JSON, so that byte-identity is a meaningful test:
 not the domain model. CVAT's shapes, attributes and track semantics are mapped onto the internal
 entities on the way in and out. No CVAT-specific concept leaks into the internal schema, and no
 internal concept is dropped because CVAT lacks a field for it.
+
+**No board problem service is assumed.** The set of lit holds identifying a problem is **entered
+and confirmed by the user** (`mvp-contract.md` Section 1); no official public interface for board
+problem data is assumed to exist. An **import adapter is a possible later addition behind an
+explicit decision**. It would be an adapter onto the internal schema exactly as CVAT is, and no
+board-specific or vendor-specific concept would leak into the internal entities.
 
 ---
 

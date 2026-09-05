@@ -133,6 +133,13 @@ single-lighting-condition measurement on one camera placement. It bounds whether
 works here. It says nothing about a different climber, a different gym or a different camera, and
 no report or status entry may imply otherwise.
 
+On the **first measured envelope** (`mvp-contract.md` Sections 1 and 8) the **wall and gym terms
+weaken to a board type**: the board is standardized, so a number measured on one board is
+**plausibly informative** about another board of the same type. That is an argument from the
+envelope and **not a demonstration** - transfer has not been shown, and showing it requires
+measuring on a second board. **The single-climber term does not weaken at all**, and neither does
+the single lighting condition or the single camera placement.
+
 ### 0.6 Report format and stop condition
 
 The implementer's final report is **exactly** these six items, in this order:
@@ -268,14 +275,22 @@ violate that rule. Say this out loud in the ADR so nobody re-litigates it in thr
 | --- | --- | --- | --- |
 | Attempts filmed | About 50, **with about 25 concentrated on a single problem** `[PLANNING]` | The concentration is what makes a per-transition failure rate measurable later; 50 attempts spread over 50 problems measures nothing twice | 3 to 4 h |
 | Clean reference frame per wall facet | 1 each | Note the approximate time only; the agent converts it to an exact timestamp (Stage 3) | 0.25 h |
-| Tape-measured distance per facet | 1 each, in **millimetres**, between two identifiable points | Without it the wall plane has no physical scale (Stage 3) | 0.25 h |
-| Hold polygons | Every hold on each facet, each with a **stable human-assigned hold number** attribute | Traced once; a re-traced subset later feeds Stage 3's self-agreement IoU | 4 to 6 h |
-| Contact tracks | **4 per attempt** (one per limb), with target, hold number, contact label and visibility attributes | Four tracks per attempt is not negotiable: a limb with no contact emits `none`, never a missing track (C7) | 10 to 14 h |
+| Named grid-position fiducials | 6 `[PILOT]` point shapes per board, placed on hold centres, each named by its **grid coordinate** | Replaces both the arbitrary wall features and the tape-measured distance: on a standardized board the physical scale comes from the versioned board definition (Stage 3) | 0.25 h |
+| Lit-hold grid coordinates | Every problem attempted, roughly 8 to 15 coordinates each `[PLANNING]`, with roles | Typed, not traced. On the board envelope a problem **is** its set of lit holds, so no hold polygon is traced and none is expected in the first release (Stage 3) | 0.5 h |
+| Contact tracks | **4 per attempt** (one per limb), with target, **target reference**, contact label and visibility attributes. On the board envelope the target reference is a **grid coordinate**; on a general wall it is the hold number | Four tracks per attempt is not negotiable: a limb with no contact emits `none`, never a missing track (C7) | 10 to 14 h |
 | Attempt spans and outcomes | 1 per attempt | Half-open, per `docs/annotation-guide.md` Sections 3 and 4 | 1 to 2 h |
 | Gold keypoint frames | About 200 `[PLANNING]` | Image task, not a video task (Section 8.4) | 4 to 6 h |
 | Blind re-annotation | 10 attempts `[PLANNING]`, **at least seven days later**, without sight of the first pass | This is the agreement measurement. Doing it the same evening measures short-term memory. | 2 to 3 h |
 
-**Total: roughly 25 to 40 hours `[PLANNING]`.** That is at the upper edge of "days, not weeks".
+**Total: roughly 20 to 30 hours `[PLANNING]`**, down from roughly 25 to 40 `[PLANNING]` before the
+board envelope removed the polygon tracing and the membership pass. That is inside "days, not
+weeks", and the saving is annotation work that no longer exists rather than work deferred.
+
+**One consequence for the contact tracks, which are now the dominant cost.** On this envelope the
+contact target vocabulary is a small closed set, in practice the lit holds of the problem, the board
+surface, `none` or `unknown`, which makes contact labelling faster and less error-prone than picking
+one hold out of a wall full of them, and makes "the system named a hold that is not even on the
+problem" a free correctness check requiring zero annotation.
 
 ### The reduction lever, and what it costs
 
@@ -529,6 +544,14 @@ integer counts behind `value`, kept separately so a reader can pool or re-slice 
 rational hiding the support. `slice` names the slice a value was computed over, for example
 `{"limb": "left_hand", "tiou": "3/10"}`; a pooled value carries an empty dict.
 
+**`MetricValue` carries no free-text reason field, and that is deliberate.** A status of
+`not_applicable` or `insufficient_data` must still travel with its reason (`mvp-contract.md`
+Section 5), and the reason is recorded **once, on the document that owns the metric list**, naming
+the decision slug responsible - never repeated on every row. Stage 7 does exactly this for the
+deferred foot-adjustment count (`briefs/stage-7-analytics.md` Section 8.5). A later stage that
+finds it genuinely needs a per-row reason records that as a named decision and changes **this**
+field list; it does not add a second reason field beside the first.
+
 ### Dataset, `schema/dataset.py`
 
 | Model | Fields |
@@ -745,6 +768,18 @@ derived file sha256, exactly as `IngestRun` records the ffprobe argv, version an
 hashes.
 
 ## 8.4 Gold keypoints and hold polygons do not use a video task at all
+
+**The hold-polygon half of this section is not exercised by the board envelope.** On a standardized
+board the hold map is generated from a versioned board definition rather than traced, so **no
+polygon annotation is expected in the first dataset release**
+(`docs/agents/briefs/stage-3-wall-and-holds.md` Sections 1 and 1.1). Nothing here is deleted: the
+image task, the polygon import path, `PolygonAnnotation` and the two mask metrics all remain,
+because a general wall still needs them and because the documented hold-extent upgrade path traces
+the standardized shapes once. The **mask-metric fixtures stay too.** They are hand-calculated tests
+of the metric implementation, they remain valid arithmetic, and they simply have no board-envelope
+data to run against yet. On real data the two mask metrics were already `not_applicable` for want of
+a segmenter (Section 8.6); on this envelope hold-polygon self-agreement IoU joins them, for want of
+a tracing.
 
 For the 200 gold keypoint frames and for the hold polygons, extract the selected frames as **PNGs
 named by their timestamp** and use a CVAT **image** task. The frame-number problem then disappears

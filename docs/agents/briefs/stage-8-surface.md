@@ -125,6 +125,13 @@ single-lighting-condition measurement on one camera placement. It bounds whether
 works here. It says nothing about a different climber, a different gym or a different camera, and
 no report or status entry may imply otherwise.
 
+On the **first measured envelope** (`mvp-contract.md` Sections 1 and 8) the **wall and gym terms
+weaken to a board type**: the board is standardized, so a number measured on one board is
+**plausibly informative** about another board of the same type. That is an argument from the
+envelope and **not a demonstration** - transfer has not been shown, and showing it requires
+measuring on a second board. **The single-climber term does not weaken at all**, and neither does
+the single lighting condition or the single camera placement.
+
 ### 0.6 Report format and stop condition
 
 The implementer's final report is **exactly** these six items, in this order:

@@ -131,6 +131,13 @@ single-lighting-condition measurement on one camera placement. It bounds whether
 works here. It says nothing about a different climber, a different gym or a different camera, and
 no report or status entry may imply otherwise.
 
+On the **first measured envelope** (`mvp-contract.md` Sections 1 and 8) the **wall and gym terms
+weaken to a board type**: the board is standardized, so a number measured on one board is
+**plausibly informative** about another board of the same type. That is an argument from the
+envelope and **not a demonstration** - transfer has not been shown, and showing it requires
+measuring on a second board. **The single-climber term does not weaken at all**, and neither does
+the single lighting condition or the single camera placement.
+
 ### 0.6 Report format and stop condition
 
 The implementer's final report is **exactly** these six items, in this order:
@@ -183,6 +190,17 @@ Consumes:
 Does **not** do: annotation (Stage 2 did it), tracking across identity gaps, contact prediction
 (Stage 5), 3D reconstruction (out of scope, `mvp-contract.md` Section 2).
 
+**Stage 4 is not narrowed by the hands-only scope decision.** The MVP predicts hand contacts only
+(`mvp-contract.md` Section 5, decision `hands-first-scope`), and Stage 5 will consume the hand
+anchors alone. Stage 4 still derives **all four** contact anchors, both palms and both toes, and
+still measures and reports the foot anchors separately. Three reasons, none of them sentimental:
+the foot anchors cost nothing extra once the pose model has run and the gold frames are already
+labelled; their measured accuracy is the only evidence that decides whether feet are ever viable
+on this envelope, which is the question `hands-first-scope` **deferred rather than settled**; and
+the deferred foot work restores them rather than rebuilding them. **An anchor whose consumer has
+not shipped yet is not dead code.** Do not remove the foot anchors, the toe anchor rule, the foot
+slices of the gate, or the foot rows of the test fixtures as unused.
+
 ## 2. Preconditions
 
 The agent does not start until every row holds. If a row does not hold, stop and report.
@@ -213,6 +231,18 @@ Four items. The owner does not read code; each item below is a decision, not a r
 
 **Nothing else.** The gold set was annotated at Stage 2. Stage 4 does not ask for a single new
 label.
+
+**One warning about the gold set, inherited rather than requested.** The first measured envelope
+(`mvp-contract.md` Section 1) is a steeply overhanging panel, so the climber hangs beneath it and
+the camera shoots steeply upward. Limb ends are **harder for the human to label** here for exactly
+the reason they are harder for the model to predict: the body hides its own hands and feet, and
+foreshortening at the top of the board compresses them. The standing instruction that a hard frame
+is **labelled** `occluded` or `out_of_frame` rather than skipped (`annotation-guide.md` Sections 0
+and 2) therefore matters more on this envelope than it would on a vertical wall. A gold set that
+quietly drops its hardest frames measures the easy ones and reports the number as though it
+covered all of them. **A gold set that comes back from an overhang with few or no occluded
+limb-end labels is evidence of skipping, not evidence of visibility** — check that before the
+backend comparison is run, and report what you found.
 
 ## 4. Deliverables
 
@@ -386,6 +416,8 @@ Do not reopen any of these. Cite them; do not restate them.
 
 | Frozen | Where |
 | --- | --- |
+| The **first measured envelope** is a standardized LED training board: one flat panel at a fixed steep angle, holds at fixed positions, LEDs marking which holds belong to a problem. The equipment class is a MoonBoard-type training board. It is a **strict subset** of the general envelope, which is not retired | `mvp-contract.md` Section 1 |
+| The MVP predicts contacts for the **hands only.** Foot contact targets stay fully defined and annotatable; a foot with no prediction is `unknown`, **never** `none`; a metric that was not attempted is `not_applicable` with its reason | `mvp-contract.md` Section 5, decision `hands-first-scope` |
 | Half-open intervals `[start_us, end_us)`; integer microseconds; time is never `frame_number / fps` | `mvp-contract.md` Section 3 |
 | Four coordinate spaces; every geometry value declares exactly one | `mvp-contract.md` Section 4 |
 | The visibility value set, and that `occluded` ≠ `unlabeled` ≠ `none` | `mvp-contract.md` Section 5, `annotation-guide.md` Section 2 |
@@ -833,6 +865,13 @@ Pooled and endpoint numbers are **never** merged, and hands and feet are **never
 and hip joints are easier and inflate a pooled number; contact detection depends on the ends of
 the limbs.
 
+**The foot slice is measured and reported even though Stage 5 will not consume it.** P2, P3 and P4
+each carry a hand slice and a foot slice, and the foot slice is **not optional and not deferred
+with the prediction.** It is nearly free — the gold frames are already labelled and the pose model
+has already run — and it is the only evidence that answers whether foot prediction is ever viable
+on this envelope. That is the question `hands-first-scope` deferred, and a report that omits the
+foot slice deletes the evidence that would reopen it.
+
 ### 11.3 The honest limitation, with the arithmetic shown
 
 This is a `[PLANNING]` calculation about **what the dataset can support**. It is not a result and
@@ -862,6 +901,26 @@ percentage points `[PLANNING]`.
 **Report the interval next to every number.** A proportion without its interval, on a sample this
 size, is a claim the data does not support.
 
+**On this envelope the exclusion count outranks the accuracy figure.** The first measured envelope
+is a steep overhang (`mvp-contract.md` Section 1): the climber hangs beneath the panel, so the
+body passes between the camera and its own limb ends far more often than on a vertical wall, and
+the upward camera foreshortens the top of the board. The **direction** is therefore known and the
+**magnitude** is not. The count excluded as `occluded` or `out_of_frame` will be **higher** here
+than the same count on a vertical wall, and the evaluated count remaining will be **lower** than
+the `[PLANNING]` row above. **No number is offered for either, because neither has been
+measured.** Measure both, report both, and say plainly if the retained count falls far below the
+planning row — that is a finding about the envelope, not a nuisance.
+
+The consequence is a reporting rule, not a caveat. **Print the excluded count and the evaluated
+count in the same row as the accuracy figure, and read them first.** A high endpoint accuracy
+computed over the handful of frames in which a limb end happened to be visible is a statement
+about those frames; printed alone it reads as a statement about the attempt. The number is not
+wrong — the denominator is missing, and the frames the denominator drops are disproportionately
+the frames in which the limb end is on a hold, which are exactly the frames Stage 5 needs. Read
+P3 and P4 beside P2 for the same reason: the abstention fraction and the longest abstention run
+say how much of the attempt the anchors actually cover, and a coverage figure and an accuracy
+figure answer different questions.
+
 ### 11.4 What this stage does not prove
 
 - Nothing about a different climber, gym, camera placement or lighting condition (Section 0.5).
@@ -869,6 +928,9 @@ size, is a claim the data does not support.
 - Nothing about 3D position, limb length, reach or center of mass.
 - Nothing about the model's behaviour on the hardware execution provider, which is deliberately
   not pinned and not measured.
+- Nothing about a general wall, a different board angle or another board type. The numbers are
+  measured on the first measured envelope; returning to general walls requires **new measurements
+  on that envelope**, not a re-reading of these (`mvp-contract.md` Sections 1 and 8).
 
 ## 12. Verification commands
 
@@ -911,7 +973,7 @@ diff artifacts_a/recordings/<asset_id>/pose_series.raw.json \
 
 ## 13. Traps
 
-Fourteen. Each has already cost someone a day somewhere.
+Fifteen. Each has already cost someone a day somewhere.
 
 | # | Trap | Consequence if missed |
 | --- | --- | --- |
@@ -929,13 +991,15 @@ Fourteen. Each has already cost someone a day somewhere.
 | 12 | **A missing frame is never a zero keypoint.** | Emitting the origin puts a point in the **corner of the image**, which Stage 5 will later find is nearest to whatever hold sits in that corner and report as a contact. Abstain with a null (C7). |
 | 13 | **The committed fixtures are below the envelope.** 160×120 and 320×240 against a 1080p `[FIXED]` envelope. | They prove the join and the plumbing. A gate accuracy number computed on them is meaningless and forbidden (`AGENTS.md` Section 11). |
 | 14 | **Editing the wrong pin.** Adding Stage 4 modules to `STAGE_ONE_MODULES` to make the guard pass. | The per-stage sets **are** the decision record of which stage introduced which module. Merging them destroys it. Add a new set; never edit a pin to make your own change pass (`AGENTS.md` Section 6). |
+| 15 | **Self-occlusion under the overhang.** The first measured envelope is a steeply overhanging panel (`mvp-contract.md` Section 1): the climber hangs beneath it, the body passes between the camera and its own limb ends, and the upward camera foreshortens the top of the board. Vertical-wall intuition about how often a hand or foot is visible does not transfer. | The limb ends — the only keypoints that decide contact — are hidden **most often exactly when they are in use.** The accuracy figure survives this looking healthy, because occluded and out-of-frame keypoints leave both the numerator and the denominator (`evaluation.md` Section 1): the score is then computed over a shrinking, easier and unrepresentative subset, and nothing in the number says so. The exclusion and evaluated counts are the reading that catches it (Section 11.3), and the same occlusion makes the gold labels harder to place in the first place (Section 3). |
 
 ## 14. Report format and stop condition
 
 As Section 0.6, with these stage-specific requirements:
 
 - The gate table has **one row per clause** from Sections 11.1 and 11.2 — nine deterministic, four `[PILOT]` — using the clause ids `D1`–`D9` and `P1`–`P4`. A clause whose data does not exist reads **`pending measurement`**, and the report says so rather than substituting synthetic data.
-- Every `[PILOT]` number is reported **with its interval** (Section 11.3) and with the excluded occluded and out-of-frame count beside it.
+- Every `[PILOT]` number is reported **with its interval** (Section 11.3) and with the excluded occluded and out-of-frame count and the evaluated count beside it, in the same row and read before it.
+- The **foot slice** of P2, P3 and P4 is reported, in full, even though Stage 5 will consume the hand anchors only (Section 11.2). Its absence is a gate failure, not a tidy-up.
 - The default run's pass count **and** the `-m model` run's pass count are both reported, with the checkpoint hashes and the hardware.
 - The two model registry entries are reproduced in the report, all seven fields each, so the reviewer can check them without opening another file.
 - The `pose-backend-selection` record states whether the paired test **separated** the candidates. If it did not, the record says **"not separable"** and names the tiebreak actually used.
@@ -954,7 +1018,7 @@ In this order, before writing anything.
 | File | Read for |
 | --- | --- |
 | `AGENTS.md` | The binding rules. Sections 2, 3, 4, 5, 6, 7, 9 and 11 in full. |
-| `docs/mvp-contract.md` | Sections 1 (envelope), 2 (out of scope, the 3D ban), 4 (coordinate spaces), 5 (visibility ontology), 6 (hip trajectory), 7 (privacy), 9 (the Stage 4 gate row), 10 (provenance classes) |
+| `docs/mvp-contract.md` | Sections 1 (envelope, **and the first measured envelope**), 2 (out of scope, the 3D ban), 4 (coordinate spaces), 5 (visibility ontology, **and the hands-only prediction scope**), 6 (hip trajectory), 7 (privacy), 8 (what a board-type measurement does and does not transfer to), 9 (the Stage 4 gate row), 10 (provenance classes) |
 | `docs/data-schema.md` | Sections 1 (which entities are due at Stage 4), 4 (versioning), 5 (provenance fields), 6 (dense trajectory storage), 7 (serialization), 9 (the ingest media protocol, especially decode order and edit lists) |
 | `docs/evaluation.md` | Section 1 "Stage 4 — pose" (PCK, endpoint PCK, the exclusion rule), Section 2 (split and leakage policy), Section 3 (how results are checked), Section 4.2 (the round-trip clause) |
 | `docs/model-registry.md` | Sections 1 (the seven fields), 2 (policy, no silent fallback), 3 (currently "Zero models"), 4 (the candidates by name and the conditions attached to them) |

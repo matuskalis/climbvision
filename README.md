@@ -52,6 +52,19 @@ Recordings outside the envelope are flagged, not rejected; ingest hard-fails onl
 | Problem identity | Explicitly user-confirmed |
 | Processing | Offline batch is acceptable |
 
+**First measured envelope.** The envelope above is the target and has not been narrowed. The first
+numbers are measured somewhere smaller: a standardized LED training board. Flat panel, fixed angle,
+holds at fixed grid positions, LEDs marking which holds are on the problem, and a versioned board
+definition supplying the positions. It is a strict subset of the table above, not a replacement
+for it.
+
+On that envelope the MVP predicts **hand contacts only**. Feet are deferred, not deleted: a board
+that lets you smear anywhere does not define a foot target worth measuring, and a foot with no
+prediction is `unknown`, never `none`. The board is also an overhang, so the climber hangs in front
+of the holds they are using, which is unhelpful for the two measurements that were already the
+weakest. Returning to general walls takes new measurements, not a new contract. Details in
+[`docs/mvp-contract.md`](docs/mvp-contract.md) Sections 1 and 5.
+
 ## Status
 
 | Stage | State |
@@ -79,9 +92,9 @@ stage does not start until the previous stage's gate is measured and reported in
 | Stage | Delivers | Constraint that keeps this telemetry, not coaching |
 | --- | --- | --- |
 | 2 | Annotation harness, CVAT adapter, group-aware split manifests | CVAT is an **adapter**; the internal schema stays the source of truth. Splits are group-aware and frozen, and leakage is **tested, not assumed**. The agreement target is `[PILOT]`, and with a single annotator it is blind intra-annotator test-retest, reported as `self_agreement`. |
-| 3 | Wall calibration and the confirmed hold map | Manual hold polygons and explicit problem membership **first**. Automatic segmentation only as **assistive preannotation**, behind a documented model adapter. The hold map is user-confirmed by contract, so no segmenter is required to reach the gate. |
+| 3 | Wall calibration and the confirmed hold map | Manual hold polygons and explicit problem membership **first**. Automatic segmentation only as **assistive preannotation**, behind a documented model adapter. The hold map is user-confirmed by contract, so no segmenter is required to reach the gate. On the first measured envelope the positions come from the versioned board definition and the problem is a confirmed set of lit holds; the polygon path stays for general walls. |
 | 4 | Climber pose trajectories | **One** pretrained pose backend, chosen by an ADR and benchmarked on the ClimbVision gold set, **not** by generic COCO AP. Raw keypoints and visibility stored **before** any filtering. |
-| 5 | Limb-hold contact intervals and stable contact-state transitions | An **interpretable geometry and temporal baseline before any learned model**. Hands and feet evaluated as **separate slices**. |
+| 5 | Limb-hold contact intervals and stable contact-state transitions | An **interpretable geometry and temporal baseline before any learned model**. Hands and feet evaluated as **separate slices**; on the first measured envelope only hands are predicted, so the foot slice is `not_applicable` with its reason. |
 | 6 | Attempts, moves, beta sequences, fall events, comparison of two attempts by contact-event alignment | Moves are **derived from contact transitions**. **No generated coaching text.** |
 | 7 | Repeated-attempt descriptive analytics: projected hip trajectory, move duration, contact dwell, explicitly defined hesitation observations, foot-adjustment counts, success/failure grouping, transition failure hazard with uncertainty | Only metrics derived from **validated primitives**. Returns `insufficient_data` when support is inadequate. |
 | 8 | Upload/job API, web review timeline, correction workflow, repeated-attempt comparison as a view over Stage 6 and 7 output, consent and retention controls | Application surface only **after the telemetry gates pass**. **No mobile app** until real web usage validates the workflow. |
