@@ -81,3 +81,38 @@ run on a different fixture set.
 | CLI commands that exist | `climbvision ingest`, `climbvision validate` |
 | Operational documents | `AGENTS.md`, `CLAUDE.md` and `docs/agents/` (the operating manual, the checklists and the per-stage briefs). They direct how work is done and claim no results. |
 | Known defects | The resolution check requires coded width at least `min_width` 1920 `[FIXED]` **and** coded height at least `min_height` 1080 `[FIXED]`, so portrait-orientation 1080p footage whose **rotation is baked into the pixels** transposes the two and is recorded as a resolution `fail`, although the same pixels in landscape pass. The fix is scheduled as **Stage 2's first task**. Workaround until then: **film in landscape.** |
+
+---
+
+## Work stopped, 2026-09-05
+
+**Status: paused at Stage 1 complete.** Stages 2 through 8 are not started and no gate beyond
+Stage 1 has been measured. Nothing here is abandoned in a broken state: Stage 1 is complete,
+reviewed and measured, and the briefs for the remaining stages are written.
+
+**Why it stopped.** Every gate from Stage 3 onward is measured against footage and annotations
+that only the project owner can produce, and the recording protocol in
+`docs/agents/02-session-checklist.md` — tripod, reference stills before and after, a session's
+worth of attempts on one board, problems filmed in blocks — is not compatible with the access
+available: a busy commercial gym, no private board. The blocker is **data access, not code and
+not technique.** No amount of implementation removes it.
+
+**A sequencing error worth recording, because it is the reusable lesson.** The filming protocol
+was written and committed before anything had established that the pipeline works on this
+envelope at all. Fifty attempts are what a *gate* needs. **One clip** is what a *feasibility
+check* needs, and a single phone propped on a bag while someone tries a board problem is an
+unremarkable thing to do in any bouldering gym. The heavy protocol was the right document in the
+wrong order: it should have followed a one-clip result, not preceded it.
+
+**What would unblock it**, in rough order of cost:
+
+| Route | What it needs |
+| --- | --- |
+| One casual clip, no protocol | An existing video already on a phone, or one ordinary attempt filmed without a tripod. Enough for a feasibility check; **not** enough for any gate |
+| Slow accumulation | Ordinary clips collected over normal sessions without a protocol, until the volume exists. Costs calendar time rather than access |
+| A private board | A home or training-space board where a session protocol is possible. Removes the blocker outright |
+| Third-party footage | Consent from named people, per `mvp-contract.md` Section 7. A consent question, not a technical one |
+
+**What must not happen on resumption.** No gate may be marked measured without the number and the
+data behind it. No accuracy-shaped value may be reported from synthetic fixtures. Nothing in
+`mvp-contract.md` was loosened to reach this pause, and nothing should be loosened to leave it.
