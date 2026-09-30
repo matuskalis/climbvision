@@ -86,12 +86,12 @@ because it will be copied.
 | Schema identity | `schema_id` and `schema_version`. `Recording` is at schema version 3 and the nested `FrameIndex` at version 2; every other document remains at version 1. |
 | `consent_record_id` | **Nullable opaque ID.** No `ConsentRecord` model exists. |
 | `participant_id` | **Nullable opaque pseudonymous ID.** No `Participant` model exists. |
-| Container facts | Format/container name, duration as reported by the container, size in bytes |
-| Audio presence | Whether any audio stream exists (privacy-relevant, see contract Section 7) |
+| Container facts | Format and container name, stream counts, size in bytes. `duration_us` is derived from the video stream's `duration_ts` and time base, not read from the container. |
+| Audio presence | `audio_stream_count`, the number of audio streams (privacy-relevant, see contract Section 7) |
 | Video stream | One `VideoStreamInfo` |
-| Frame index | One `FrameIndex` |
+| Frame index | Not embedded. `FrameIndex` is its own document, `frame_index.json`; the manifest keeps `video_packet_count` and the hash below. |
 | `frame_index_sha256` | Hash of the frame index. Derives from packet PTS, **not** from the path, so it stays in the manifest. |
-| Quality | One `QualityAssessment` |
+| Quality | A list of `QualityAssessment`, one per flag |
 
 **Deliberately not in the manifest: `probe_streams_sha256` and `probe_packets_sha256`.** They
 hash ffprobe's raw output, which embeds the input filename, and they were the only
@@ -131,7 +131,7 @@ The per-packet table for video stream 0, **sorted by presentation timestamp**. S
 | Per-packet `pts` | Integer ticks in the stream time base, or **`null` when the container has no timestamp**. Never `0` as a substitute. |
 | Per-packet `dts` | Integer ticks, or `null` |
 | Per-packet `duration` | Integer ticks, or `null`. The **only** source of per-frame duration. |
-| Per-packet `flags` | As reported (keyframe flag and others) |
+| Per-packet `flags` | Reduced to `key_frame_indices`, the packets whose flags contain `K`. No other flag is kept here; ffprobe's verbatim output, flags included, is preserved per run in the raw probe files. |
 | `unknown_key_frame_indices` | Indices of packets whose `flags` field was **absent**. Kept separate so that **"unknown" and "not a keyframe" stay distinguishable** rather than the first silently becoming the second. Empty on all five committed fixtures. |
 | `decode_order_differs` | True when the demuxed packet order was not presentation order |
 | Packet count | Integer |
@@ -151,10 +151,13 @@ check, not a failing one.
 
 ### `QualityFlag` and `QualityAssessment`
 
-`QualityFlag` is the closed set of envelope and integrity checks (resolution, frame rate,
-missing timestamps, decode-order reordering, audio presence, rotation source, and similar).
-`QualityAssessment` carries one `QualityStatus` per flag. **Envelope violations produce flags,
-never rejections** (`mvp-contract.md` Section 1).
+`QualityFlag` is the closed set of checks ingest evaluates. Four exist: `resolution_below_min`,
+`frame_rate_below_min`, `variable_frame_rate` and `timestamps_absent`. Decode-order reordering,
+audio presence and rotation are recorded as plain facts (`decode_order_differs`,
+`audio_stream_count`, `rotation_degrees` with `rotation_source`), not as flags.
+`QualityAssessment` carries one `QualityStatus` per flag, with the measurement and the threshold it
+was judged against. **Envelope violations produce flags, never rejections** (`mvp-contract.md`
+Section 1).
 
 ### `IngestRun`
 
@@ -334,7 +337,7 @@ repository's own CFR fixture by 1024 ticks.
 
 | Condition | Behaviour |
 | --- | --- |
-| Envelope violation (below `min_width` 1920 `[FIXED]` or `min_height` 1080 `[FIXED]`, below `min_frame_rate` `30/1` `[FIXED]`, audio present, rotation applied) | Recorded as a three-valued quality flag. Ingest succeeds. |
+| Envelope violation (below `min_width` 1920 `[FIXED]` or `min_height` 1080 `[FIXED]`, below `min_frame_rate` `30/1` `[FIXED]`, variable frame rate, missing timestamps) | Recorded as a three-valued quality flag. Ingest succeeds. Audio presence and rotation are recorded as facts, not flagged. |
 | Malformed input (bad return code, `error` key, no video stream) | **Hard fail.** No manifest is written. |
 | `MANIFEST_CONFLICT`: an existing `recording.json` for the same video bytes whose bytes differ, because config or schema version changed | **Hard fail.** The stored manifest is **never overwritten**, because earlier run records attest to those bytes by hash. Identical bytes remain a silent no-op, so idempotent re-ingest is unaffected. |
 
