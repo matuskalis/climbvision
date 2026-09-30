@@ -164,7 +164,7 @@ and 3.14) on every pull request and every push to `main`: [`ci.yml`](.github/wor
 
 - **No footage, no pose, no accuracy.** The fixtures prove the code runs. They cannot show that it
   can see a climber.
-- **Work is paused at Stage 1.** Every later gate needs footage that only the owner can film, and
+- **Work is paused at Stage 1.** Every later gate needs footage that only the author can film, and
   the filming protocol was written before a one-clip feasibility check. The reasoning and the four
   routes to unblock it are in [`docs/status.md`](docs/status.md#work-stopped-2026-09-05).
 - **Runs from a checkout.** The ingest config is read from `configs/` next to `src/`, and the wheel
@@ -202,7 +202,7 @@ until the previous gate is measured and reported in [`docs/status.md`](docs/stat
 | --- | --- | --- |
 | 2 | Annotation harness, CVAT adapter, group-aware split manifests | CVAT is an **adapter**; the internal schema stays the source of truth. Splits are frozen and leakage is **tested, not assumed**. With a single annotator the agreement target is blind intra-annotator test-retest, reported as `self_agreement`. |
 | 3 | Wall calibration and the confirmed hold map | Manual hold polygons and explicit problem membership **first**. Automatic segmentation only as assistive preannotation behind a model adapter. On the first envelope, positions come from a versioned board definition. |
-| 4 | Climber pose trajectories | **One** pretrained backend, chosen by an ADR and benchmarked on the project's own gold set, not by generic COCO AP. Raw keypoints and visibility stored **before** any filtering. |
+| 4 | Climber pose trajectories | **One** pretrained backend, chosen in a written decision record and benchmarked on the project's own gold set, not by generic COCO AP. Raw keypoints and visibility stored **before** any filtering. |
 | 5 | Limb-hold contact intervals and stable contact-state transitions | An interpretable geometry and temporal baseline **before** any learned model. Hands and feet are separate slices; feet are `not_applicable` on the first envelope. |
 | 6 | Attempts, moves, beta sequences, fall events, comparison of two attempts | Moves are **derived from contact transitions**. No generated coaching text. |
 | 7 | Repeated-attempt descriptive analytics | Only metrics derived from validated primitives. Returns `insufficient_data` when support is inadequate. |
