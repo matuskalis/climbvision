@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 764" width="1200" height="764" role="img" aria-labelledby="t d">
+  <title id="t">27 frames, two clocks</title>
+  <desc id="d">27 frames of a synthetic variable-frame-rate clip, placed at their container timestamps and at frame number divided by the average frame rate. The worst disagreement is 119 ms.</desc>
+  <style>
+  :root {
+    --ground: #f1f3f2; --ink: #14181b; --muted: #57626a; --blue: #1f4fd8;
+    --red: #c9252d; --ok: #0b6f5f; --link: #b4bdc2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0f1316; --ink: #e9eef1; --muted: #9aa6ad; --blue: #7aa2ff;
+      --red: #ff7b72; --ok: #4fd1b5; --link: #3a454c;
+    }
+  }
+  .ground { fill: var(--ground); }
+  .ink { fill: var(--ink); }
+  .muted { fill: var(--muted); }
+  .blue { fill: var(--blue); }
+  .red { fill: var(--red); }
+  .ok { fill: var(--ok); }
+  .sans { font-family: 'Avenir Next Condensed', 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', Arial, sans-serif; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace; }
+  .link { stroke: var(--link); stroke-width: 1.5; }
+  .focus { stroke: var(--ink); stroke-width: 3; }
+  .axis { stroke: var(--ink); stroke-width: 2; }
+</style>
+  <rect class="ground" width="1200" height="764"/>
+  <text class="ink sans" x="56.0" y="100" font-size="56" font-weight="800">27 frames, two clocks</text>
+  <text class="muted sans" x="56.0" y="138" font-size="21">A real ingest of a synthetic clip whose frames were dropped on purpose. Drawn from the files it wrote.</text>
+  <text class="muted mono" x="1144.0" y="100" font-size="16" text-anchor="end">climbvision ingest vfr_160x120_2s.mp4</text>
+  <text class="blue sans" x="56.0" y="206" font-size="19" font-weight="700" letter-spacing="1">CONTAINER TIMESTAMPS</text>
+  <text class="muted sans" x="56.0" y="228" font-size="17">recorded as integer ticks</text>
+  <text class="muted sans" x="56.0" y="250" font-size="17">of 1/15360 s</text>
+  <text class="red sans" x="56.0" y="310" font-size="19" font-weight="700" letter-spacing="1">FRAME NUMBER ÷ AVG RATE</text>
+  <text class="muted sans" x="56.0" y="332" font-size="17">810/59 fps as reported</text>
+  <text class="muted sans" x="56.0" y="354" font-size="17">never used for time</text>
+  <line class="link" x1="340.0" y1="232" x2="340.0" y2="292"/>
+  <line class="link" x1="353.6" y1="232" x2="369.8" y2="292"/>
+  <line class="link" x1="367.3" y1="232" x2="399.6" y2="292"/>
+  <line class="link" x1="435.4" y1="232" x2="429.3" y2="292"/>
+  <line class="link" x1="449.0" y1="232" x2="459.1" y2="292"/>
+  <line class="link" x1="462.6" y1="232" x2="488.9" y2="292"/>
+  <line class="link" x1="530.8" y1="232" x2="518.7" y2="292"/>
+  <line class="link" x1="544.4" y1="232" x2="548.4" y2="292"/>
+  <line class="link" x1="558.0" y1="232" x2="578.2" y2="292"/>
+  <line class="link" x1="626.2" y1="232" x2="608.0" y2="292"/>
+  <line class="link" x1="639.8" y1="232" x2="637.8" y2="292"/>
+  <line class="link" x1="653.4" y1="232" x2="667.6" y2="292"/>
+  <line class="link" x1="721.6" y1="232" x2="697.3" y2="292"/>
+  <line class="link" x1="735.2" y1="232" x2="727.1" y2="292"/>
+  <line class="link" x1="748.8" y1="232" x2="756.9" y2="292"/>
+  <line class="link" x1="816.9" y1="232" x2="786.7" y2="292"/>
+  <line class="link" x1="830.6" y1="232" x2="816.4" y2="292"/>
+  <line class="link" x1="844.2" y1="232" x2="846.2" y2="292"/>
+  <line class="link" x1="912.3" y1="232" x2="876.0" y2="292"/>
+  <line class="link" x1="926.0" y1="232" x2="905.8" y2="292"/>
+  <line class="link" x1="939.6" y1="232" x2="935.6" y2="292"/>
+  <line class="link" x1="1007.7" y1="232" x2="965.3" y2="292"/>
+  <line class="link" x1="1021.4" y1="232" x2="995.1" y2="292"/>
+  <line class="link" x1="1035.0" y1="232" x2="1024.9" y2="292"/>
+  <line class="focus" x1="1103.1" y1="232" x2="1054.7" y2="292"/>
+  <line class="link" x1="1116.7" y1="232" x2="1084.4" y2="292"/>
+  <line class="link" x1="1130.4" y1="232" x2="1114.2" y2="292"/>
+  <rect class="blue" x="338.0" y="188" width="4" height="44"/>
+  <rect class="red" x="338.0" y="292" width="4" height="44"/>
+  <rect class="blue" x="351.6" y="188" width="4" height="44"/>
+  <rect class="red" x="367.8" y="292" width="4" height="44"/>
+  <rect class="blue" x="365.3" y="188" width="4" height="44"/>
+  <rect class="red" x="397.6" y="292" width="4" height="44"/>
+  <rect class="blue" x="433.4" y="188" width="4" height="44"/>
+  <rect class="red" x="427.3" y="292" width="4" height="44"/>
+  <rect class="blue" x="447.0" y="188" width="4" height="44"/>
+  <rect class="red" x="457.1" y="292" width="4" height="44"/>
+  <rect class="blue" x="460.6" y="188" width="4" height="44"/>
+  <rect class="red" x="486.9" y="292" width="4" height="44"/>
+  <rect class="blue" x="528.8" y="188" width="4" height="44"/>
+  <rect class="red" x="516.7" y="292" width="4" height="44"/>
+  <rect class="blue" x="542.4" y="188" width="4" height="44"/>
+  <rect class="red" x="546.4" y="292" width="4" height="44"/>
+  <rect class="blue" x="556.0" y="188" width="4" height="44"/>
+  <rect class="red" x="576.2" y="292" width="4" height="44"/>
+  <rect class="blue" x="624.2" y="188" width="4" height="44"/>
+  <rect class="red" x="606.0" y="292" width="4" height="44"/>
+  <rect class="blue" x="637.8" y="188" width="4" height="44"/>
+  <rect class="red" x="635.8" y="292" width="4" height="44"/>
+  <rect class="blue" x="651.4" y="188" width="4" height="44"/>
+  <rect class="red" x="665.6" y="292" width="4" height="44"/>
+  <rect class="blue" x="719.6" y="188" width="4" height="44"/>
+  <rect class="red" x="695.3" y="292" width="4" height="44"/>
+  <rect class="blue" x="733.2" y="188" width="4" height="44"/>
+  <rect class="red" x="725.1" y="292" width="4" height="44"/>
+  <rect class="blue" x="746.8" y="188" width="4" height="44"/>
+  <rect class="red" x="754.9" y="292" width="4" height="44"/>
+  <rect class="blue" x="814.9" y="188" width="4" height="44"/>
+  <rect class="red" x="784.7" y="292" width="4" height="44"/>
+  <rect class="blue" x="828.6" y="188" width="4" height="44"/>
+  <rect class="red" x="814.4" y="292" width="4" height="44"/>
+  <rect class="blue" x="842.2" y="188" width="4" height="44"/>
+  <rect class="red" x="844.2" y="292" width="4" height="44"/>
+  <rect class="blue" x="910.3" y="188" width="4" height="44"/>
+  <rect class="red" x="874.0" y="292" width="4" height="44"/>
+  <rect class="blue" x="924.0" y="188" width="4" height="44"/>
+  <rect class="red" x="903.8" y="292" width="4" height="44"/>
+  <rect class="blue" x="937.6" y="188" width="4" height="44"/>
+  <rect class="red" x="933.6" y="292" width="4" height="44"/>
+  <rect class="blue" x="1005.7" y="188" width="4" height="44"/>
+  <rect class="red" x="963.3" y="292" width="4" height="44"/>
+  <rect class="blue" x="1019.4" y="188" width="4" height="44"/>
+  <rect class="red" x="993.1" y="292" width="4" height="44"/>
+  <rect class="blue" x="1033.0" y="188" width="4" height="44"/>
+  <rect class="red" x="1022.9" y="292" width="4" height="44"/>
+  <rect class="blue" x="1101.1" y="188" width="4" height="44"/>
+  <rect class="red" x="1052.7" y="292" width="4" height="44"/>
+  <rect class="blue" x="1114.7" y="188" width="4" height="44"/>
+  <rect class="red" x="1082.4" y="292" width="4" height="44"/>
+  <rect class="blue" x="1128.4" y="188" width="4" height="44"/>
+  <rect class="red" x="1112.2" y="292" width="4" height="44"/>
+  <line class="axis" x1="340" y1="368" x2="1144" y2="368"/>
+  <line class="axis" x1="340.0" y1="368" x2="340.0" y2="376"/>
+  <text class="muted mono" x="340.0" y="398" font-size="16" text-anchor="middle">0 s</text>
+  <line class="axis" x1="544.4" y1="368" x2="544.4" y2="376"/>
+  <text class="muted mono" x="544.4" y="398" font-size="16" text-anchor="middle">0.5 s</text>
+  <line class="axis" x1="748.8" y1="368" x2="748.8" y2="376"/>
+  <text class="muted mono" x="748.8" y="398" font-size="16" text-anchor="middle">1 s</text>
+  <line class="axis" x1="953.2" y1="368" x2="953.2" y2="376"/>
+  <text class="muted mono" x="953.2" y="398" font-size="16" text-anchor="middle">1.5 s</text>
+  <line class="axis" x1="1144.0" y1="368" x2="1144.0" y2="376"/>
+  <text class="muted mono" x="1144.0" y="398" font-size="16" text-anchor="end">1.967 s</text>
+  <text class="ink mono" x="1103.1" y="178" font-size="16" font-weight="700" text-anchor="middle">24</text>
+  <text class="ink mono" x="1054.7" y="356" font-size="16" font-weight="700" text-anchor="middle">24</text>
+  <text class="ink sans" x="340.0" y="444" font-size="21">Frame 24 is at <tspan class="blue" font-weight="700">1.867 s</tspan> in the container and at <tspan class="red" font-weight="700">1.748 s</tspan> by frame number / rate: 119 ms apart.</text>
+  <text class="muted sans" x="56.0" y="494" font-size="17" font-weight="700" letter-spacing="1">QUALITY FLAGS, NOT REJECTIONS</text>
+  <text class="muted mono" x="1144.0" y="494" font-size="15" text-anchor="end">this clip is outside the envelope on purpose; the run still exited 0</text>
+  <polygon class="red" points="56.0,533 72.0,533 64.0,517"/>
+  <text class="red mono" x="82.0" y="532" font-size="16" font-weight="700">FAIL</text>
+  <text class="ink sans" x="82.0" y="556" font-size="19" font-weight="700">resolution</text>
+  <text class="muted mono" x="82.0" y="578" font-size="16">160x120, floor 1920x1080</text>
+  <polygon class="red" points="328.0,533 344.0,533 336.0,517"/>
+  <text class="red mono" x="354.0" y="532" font-size="16" font-weight="700">FAIL</text>
+  <text class="ink sans" x="354.0" y="556" font-size="19" font-weight="700">frame rate</text>
+  <text class="muted mono" x="354.0" y="578" font-size="16">810/59, floor 30/1</text>
+  <polygon class="red" points="600.0,533 616.0,533 608.0,517"/>
+  <text class="red mono" x="626.0" y="532" font-size="16" font-weight="700">FAIL</text>
+  <text class="ink sans" x="626.0" y="556" font-size="19" font-weight="700">variable rate</text>
+  <text class="muted mono" x="626.0" y="578" font-size="16">2 PTS deltas, limit 1</text>
+  <rect class="ok" x="872.0" y="517" width="16" height="16"/>
+  <text class="ok mono" x="898.0" y="532" font-size="16" font-weight="700">OK</text>
+  <text class="ink sans" x="898.0" y="556" font-size="19" font-weight="700">timestamps</text>
+  <text class="muted mono" x="898.0" y="578" font-size="16">27 of 27 packets</text>
+  <text class="muted sans" x="56.0" y="628" font-size="17" font-weight="700" letter-spacing="1">WHAT THE RUN WROTE</text>
+  <text class="muted mono" x="1144.0" y="628" font-size="15" text-anchor="end">4 hashes re-computed from the files on disk: all match</text>
+  <text class="ink mono" x="56.0" y="658" font-size="16">asset_id</text>
+  <text class="ink mono" x="280.0" y="658" font-size="16" font-weight="700">a303e1847f4c…</text>
+  <text class="muted mono" x="480.0" y="658" font-size="16">sha256 of the file bytes, so a rename changes nothing</text>
+  <text class="ink mono" x="56.0" y="682" font-size="16">recording.json</text>
+  <text class="ink mono" x="280.0" y="682" font-size="16" font-weight="700">883cd1a6e028…</text>
+  <text class="muted mono" x="480.0" y="682" font-size="16">canonical JSON, byte-identical on every re-ingest</text>
+  <text class="ink mono" x="56.0" y="706" font-size="16">frame_index.json</text>
+  <text class="ink mono" x="280.0" y="706" font-size="16" font-weight="700">993538ea1cbc…</text>
+  <text class="muted mono" x="480.0" y="706" font-size="16">hash kept in the manifest, ticks sorted by PTS</text>
+  <text class="ink mono" x="56.0" y="730" font-size="16">runs/run-&lt;id&gt;.json</text>
+  <text class="ink mono" x="280.0" y="730" font-size="16" font-weight="700">append-only</text>
+  <text class="muted mono" x="480.0" y="730" font-size="16">names manifest, config, ffprobe 8.0 and raw probe output by hash</text>
+</svg>

@@ -45,6 +45,6 @@ select = ["E", "F", "I", "N", "UP", "B", "SIM"]
 
 [tool.mypy]
 python_version = "3.11"
-files = ["src"]
+files = ["src", "scripts"]
 plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
