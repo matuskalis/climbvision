@@ -31,9 +31,7 @@ def packet_duration_ticks(frame_index: FrameIndex) -> list[int]:
     if durations:
         return durations
     present = [pts for pts in frame_index.pts if pts is not None]
-    deltas = sorted(
-        later - earlier for earlier, later in zip(present, present[1:], strict=False)
-    )
+    deltas = sorted(later - earlier for earlier, later in zip(present, present[1:], strict=False))
     return [deltas[len(deltas) // 2]] if deltas else []
 
 
@@ -88,8 +86,7 @@ def test_the_bounded_branch_of_the_gate_runs_on_measured_timestamps(ingested):
     bounded = [
         fixture
         for fixture, index in ingested.items()
-        if index.time_base.den > MICROSECOND_TIMEBASE_LIMIT
-        and gate(index)["packets_with_pts"] > 0
+        if index.time_base.den > MICROSECOND_TIMEBASE_LIMIT and gate(index)["packets_with_pts"] > 0
     ]
     print(f"fixtures exercising the bounded branch with real PTS: {bounded}")
     assert bounded
@@ -117,12 +114,9 @@ def test_the_packet_duration_fallback_uses_a_real_observed_delta(ingested):
     # duration. It is kept because footage whose demuxer reports no packet duration is a real
     # possibility, so it is exercised directly rather than left as untested code.
     measured = ingested[CFR]
-    without_durations = measured.model_copy(
-        update={"duration": [None] * measured.packet_count}
-    )
+    without_durations = measured.model_copy(update={"duration": [None] * measured.packet_count})
     deltas = sorted(
-        later - earlier
-        for earlier, later in zip(measured.pts, measured.pts[1:], strict=False)
+        later - earlier for earlier, later in zip(measured.pts, measured.pts[1:], strict=False)
     )
     assert packet_duration_ticks(without_durations) == [deltas[len(deltas) // 2]]
     assert deltas[len(deltas) // 2] in deltas

@@ -107,24 +107,27 @@ def test_raw_probe_documents_are_kept_verbatim(tmp_path):
     assert b"\n    " in raw
     keys = list(json.loads(raw)["streams"][0])
     assert keys != sorted(keys)
-    assert raw == subprocess.run(
-        [
-            "ffprobe",
-            "-hide_banner",
-            "-loglevel",
-            "error",
-            "-print_format",
-            "json",
-            "-show_error",
-            "-show_format",
-            "-show_streams",
-            "-i",
-            CFR,
-        ],
-        cwd=VIDEO_DIR,
-        capture_output=True,
-        check=True,
-    ).stdout
+    assert (
+        raw
+        == subprocess.run(
+            [
+                "ffprobe",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-print_format",
+                "json",
+                "-show_error",
+                "-show_format",
+                "-show_streams",
+                "-i",
+                CFR,
+            ],
+            cwd=VIDEO_DIR,
+            capture_output=True,
+            check=True,
+        ).stdout
+    )
 
 
 def test_the_run_record_binds_the_manifest_to_its_inputs(tmp_path):
