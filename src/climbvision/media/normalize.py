@@ -1,9 +1,20 @@
+from typing import TypedDict
+
 from climbvision.errors import ClimbVisionError
 from climbvision.schema import FrameIndex, Timebase, VideoStreamInfo
+from climbvision.schema.recording import RotationSource
 from climbvision.schema.versions import FRAME_INDEX_SCHEMA_ID, FRAME_INDEX_SCHEMA_VERSION
 from climbvision.timebase import parse_rational, pts_to_us
 
 DISPLAY_MATRIX = "Display Matrix"
+
+
+class ContainerFacts(TypedDict):
+    format_name: str | None
+    format_long_name: str | None
+    stream_count: int
+    video_stream_count: int
+    audio_stream_count: int
 
 
 def select_video_stream(streams_document: dict) -> dict:
@@ -54,7 +65,7 @@ def normalize_video_stream(raw_stream: dict) -> VideoStreamInfo:
     )
 
 
-def container_facts(streams_document: dict) -> dict[str, str | int | None]:
+def container_facts(streams_document: dict) -> ContainerFacts:
     raw_streams = streams_document.get("streams")
     streams = raw_streams if isinstance(raw_streams, list) else []
     raw_format = streams_document.get("format")
@@ -132,7 +143,7 @@ def _presentation_order_key(entry: tuple) -> tuple[int, int, int]:
     return (0, pts, position)
 
 
-def _rotation(raw_stream: dict) -> tuple[int | None, str]:
+def _rotation(raw_stream: dict) -> tuple[int | None, RotationSource]:
     # A rotation that is present but unreadable is not the same fact as no rotation at all, so
     # each gets its own source value and the unreadable ones report unknown degrees.
     side_data_list = raw_stream.get("side_data_list")

@@ -103,11 +103,10 @@ def _timestamps(frame_index: FrameIndex) -> QualityAssessment:
 def _distinct_pts_delta_count(frame_index: FrameIndex) -> int | None:
     # Dropping the packets without a PTS and measuring across the hole would invent a delta
     # between packets that were never adjacent, so partial evidence abstains outright.
-    if any(pts is None for pts in frame_index.pts):
+    timestamps = [pts for pts in frame_index.pts if pts is not None]
+    if len(timestamps) != len(frame_index.pts) or len(timestamps) < 2:
         return None
-    if len(frame_index.pts) < 2:
-        return None
-    return len({later - earlier for earlier, later in pairwise(frame_index.pts)})
+    return len({later - earlier for earlier, later in pairwise(timestamps)})
 
 
 def _rational_text(rational: Timebase | None) -> str | None:
