@@ -14,9 +14,7 @@ PROBE_STREAMS_SUFFIX = ".probe.streams.raw.json"
 PROBE_PACKETS_SUFFIX = ".probe.packets.raw.json"
 
 
-def ingest(
-    video_path: Path, out_root: Path, config_path: Path = DEFAULT_CONFIG_PATH
-) -> Recording:
+def ingest(video_path: Path, out_root: Path, config_path: Path = DEFAULT_CONFIG_PATH) -> Recording:
     source = _validated_source(video_path)
     config_bytes = _read_config(config_path)
     config = _parse_config(config_bytes, config_path)
@@ -106,9 +104,7 @@ def _validated_source(video_path: Path) -> Path:
             "INPUT_IS_DIRECTORY", f"{video_path} is a directory; pass a single video file"
         )
     if not source.is_file():
-        raise ClimbVisionError(
-            "INPUT_NOT_A_REGULAR_FILE", f"{video_path} is not a regular file"
-        )
+        raise ClimbVisionError("INPUT_NOT_A_REGULAR_FILE", f"{video_path} is not a regular file")
     if source.stat().st_size == 0:
         raise ClimbVisionError("INPUT_EMPTY", f"{video_path} is zero bytes")
     return source.resolve()
@@ -134,8 +130,7 @@ def _parse_config(config_bytes: bytes, config_path: Path) -> dict:
     if not isinstance(config, dict):
         raise ClimbVisionError(
             "CONFIG_UNPARSEABLE",
-            f"ingest config {config_path.name} must be a JSON object, "
-            f"got {type(config).__name__}",
+            f"ingest config {config_path.name} must be a JSON object, got {type(config).__name__}",
         )
     return config
 

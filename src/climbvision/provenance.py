@@ -77,9 +77,7 @@ def _git_output(checkout: Path, arguments: list[str]) -> str | None:
     git = shutil.which("git")
     if git is None:
         return None
-    completed = subprocess.run(
-        [git, *arguments], cwd=checkout, capture_output=True, text=True
-    )
+    completed = subprocess.run([git, *arguments], cwd=checkout, capture_output=True, text=True)
     if completed.returncode != 0:
         return None
     return completed.stdout.strip()

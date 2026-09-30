@@ -16,7 +16,7 @@ comparison of repeated attempts. It is not a coach, not a grader and not a score
 named model, a deterministic derivation, or a measured aggregate. Nothing else may be emitted.
 
 **Current state.** Stage 0 (frozen contract) and Stage 1 (deterministic ingest) are complete:
-423 tests, `ruff` clean, zero models, two CLI commands. **Stages 2 through 8 have not started.**
+423 tests, `ruff` and `mypy` clean, zero models, two CLI commands. **Stages 2 through 8 have not started.**
 No pose, no hold detection, no calibration, no annotations, no split manifests, no models, no
 application surface. Do not write code for a stage that has not been opened by a brief.
 
@@ -89,7 +89,7 @@ is a gate clause.
 
 | Area | Rule |
 | --- | --- |
-| Language and tooling | Python 3.11, `uv`, Pydantic v2, `pytest`, `ruff` (config in `pyproject.toml`) |
+| Language and tooling | Python 3.11, `uv`, Pydantic v2, `pytest`, `ruff`, `mypy` (config in `pyproject.toml`) |
 | Models | Every Pydantic model carries `model_config = ConfigDict(extra="forbid", frozen=True)` |
 | Media boundary | FFmpeg/`ffprobe` or PyAV **only** at the media boundary, never scattered through the codebase |
 | Not before Stage 8 | No Postgres, no queues, no cloud services, no Docker, no FastAPI, no React, no mobile code |
@@ -263,6 +263,8 @@ convention.
    | `uv sync` | Environment resolves |
    | `uv run pytest` | All tests pass. **No skipped test counts as a pass.** |
    | `uv run ruff check .` | Clean |
+   | `uv run ruff format --check .` | Clean |
+   | `uv run mypy` | Clean |
    | The stage's CLI smoke command, for Stage 1 `uv run climbvision ingest <video> --out artifacts` followed by `uv run climbvision validate artifacts/recordings/<asset_id>/recording.json` | Exit code 0 and the expected artifact layout on disk |
    | The offline check: run the suite in an environment where `ffprobe` is **not** on `PATH` | The `ffprobe`-dependent integration tests **skip**, they do not fail, and the unit suite still passes. Sockets are already blocked in every test by the autouse `block_network` fixture in `tests/conftest.py`. Stage 1 observed 372 passed, 51 skipped, against 423 total. |
 

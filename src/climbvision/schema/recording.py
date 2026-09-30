@@ -5,6 +5,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from climbvision.hashing import ASSET_ID_PATTERN, SHA256_HEX_PATTERN
 from climbvision.schema.quality import QualityAssessment
 
+RotationSource = Literal[
+    "display_matrix", "display_matrix_unreadable", "tag", "tag_unreadable", "absent"
+]
+
 
 class Timebase(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -34,9 +38,7 @@ class VideoStreamInfo(BaseModel):
     avg_frame_rate: Timebase | None
     r_frame_rate: Timebase | None
     rotation_degrees: int | None
-    rotation_source: Literal[
-        "display_matrix", "display_matrix_unreadable", "tag", "tag_unreadable", "absent"
-    ]
+    rotation_source: RotationSource
 
 
 class Recording(BaseModel):

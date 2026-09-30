@@ -35,9 +35,7 @@ def executable() -> str:
 
 
 def version() -> str:
-    completed = subprocess.run(
-        [executable(), *VERSION_ARGS], capture_output=True
-    )
+    completed = subprocess.run([executable(), *VERSION_ARGS], capture_output=True)
     if completed.returncode != 0:
         raise ClimbVisionError(
             "FFPROBE_VERSION_FAILED",
@@ -66,9 +64,7 @@ def _run(path: Path, entry_args: tuple[str, ...]) -> ProbeResult:
     # ffprobe is invoked from the file's own directory with a bare basename so that the
     # `format.filename` it echoes into the raw output is a basename, never an absolute path.
     argv = [*BASE_ARGS, *entry_args, *DEMUXER_ARGS, "-i", path.name]
-    completed = subprocess.run(
-        [executable(), *argv], cwd=path.parent, capture_output=True
-    )
+    completed = subprocess.run([executable(), *argv], cwd=path.parent, capture_output=True)
     stderr = completed.stderr.decode("utf-8", "replace").strip()
     if completed.returncode != 0:
         raise ClimbVisionError(
