@@ -3,7 +3,8 @@
 The figure is drawn from the files `climbvision ingest` wrote, not from the in-memory objects,
 and the script re-hashes those files against the run record before it draws anything. It has no
 dependencies beyond climbvision itself and needs ffprobe on PATH. Output is deterministic for a
-given ffprobe: the random run id and the wall-clock time are never drawn.
+given ffprobe: the random run id and the wall-clock time are never drawn. It draws two clocks, so
+the clip needs a timestamp on every packet and a known average frame rate.
 
 Usage: uv run python scripts/render_hero.py [video] [out.svg]
 """
@@ -16,6 +17,7 @@ from fractions import Fraction
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from climbvision.errors import ClimbVisionError
 from climbvision.hashing import sha256_bytes
 from climbvision.ingest import PROBE_PACKETS_SUFFIX, PROBE_STREAMS_SUFFIX, ingest
 
@@ -110,6 +112,8 @@ def run_ingest(video: Path) -> Run:
 
     base = frame_index["time_base"]
     rate = manifest["video_stream"]["avg_frame_rate"]
+    if rate is None or None in frame_index["pts"]:
+        sys.exit(f"{run['input_basename']} has no frame rate or a packet without a timestamp")
     return Run(
         video_name=run["input_basename"],
         asset_id=manifest["asset_id"],
@@ -410,7 +414,10 @@ def render(run: Run) -> str:
 def main() -> None:
     video = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_VIDEO
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_OUT
-    svg = render(run_ingest(video))
+    try:
+        svg = render(run_ingest(video))
+    except ClimbVisionError as error:
+        sys.exit(f"error: {error.code}: {error.message}")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(svg, encoding="utf-8")
     print(f"wrote {out} ({len(svg.encode('utf-8'))} bytes)")

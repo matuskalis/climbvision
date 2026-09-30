@@ -13,7 +13,8 @@ and no accuracy number. Those two facts are related.
 
 One real ingest of `tests/fixtures/video/vfr_160x120_2s.mp4`, a synthetic clip with frames dropped
 on purpose. The figure is drawn from the files the run wrote, after re-hashing them against the
-run record. `uv run python scripts/render_hero.py` regenerates it byte for byte.
+run record. `uv run python scripts/render_hero.py` regenerates it, byte for byte with the same
+ffprobe.
 
 ## Try it
 
@@ -46,20 +47,22 @@ That digest is what ffprobe 8.0 gives; another ffprobe may report other containe
 
 ```
 artifacts/recordings/<asset_id>/
-  recording.json                    what the file is: container, stream, duration, quality flags
-  frame_index.json                  one row per video packet: PTS, DTS, duration, in container ticks
+  recording.json                      the file's facts and its quality flags
+  frame_index.json                    one row per packet: PTS, DTS, duration (ticks)
   runs/
-    <run_id>.json                   this execution: tool versions, config hash, git commit, hashes of the rest
-    <run_id>.probe.streams.raw.json ffprobe's answer, verbatim
-    <run_id>.probe.packets.raw.json ffprobe's answer, verbatim
+    <run_id>.json                     this execution, with hashes of everything else
+    <run_id>.probe.streams.raw.json   ffprobe's answer, verbatim
+    <run_id>.probe.packets.raw.json   ffprobe's answer, verbatim
 ```
 
 Every re-ingest adds a `runs/` triple and leaves the two files above it alone. The quality block
 of `recording.json` for the clip in the figure (an excerpt of the real file):
 
 ```json
-{"flag": "variable_frame_rate", "status": "fail",
- "measurement": {"avg_frame_rate": "810/59", "distinct_pts_delta_count": 2, "r_frame_rate": "30/1"},
+{"flag": "variable_frame_rate",
+ "measurement": {"avg_frame_rate": "810/59", "distinct_pts_delta_count": 2,
+                 "r_frame_rate": "30/1"},
+ "status": "fail",
  "threshold": {"max_distinct_pts_delta_count": 1}}
 ```
 
@@ -125,11 +128,11 @@ list.
 
 | Check | Result | Command |
 | --- | --- | --- |
-| Tests | 423 passed, 22 s on an M1 Pro | `uv run pytest` |
+| Tests | 423 passed, 22 s on an M1 Pro, 6 to 10 s on a CI runner | `uv run pytest` |
 | Tests, `ffprobe` absent from `PATH` | 372 passed, 51 skipped: the tests that need it skip, they do not fail | `uv run pytest -rs` |
 | Line coverage | 96 % of 572 statements | `uv run --with pytest-cov pytest --cov=climbvision` |
 | Lint, format, types | clean | `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy` |
-| Python | 3.11.14 and 3.14.7 both pass | `uv run --python 3.14 pytest` |
+| Python and ffprobe | 423 passed on Python 3.11 and 3.14, with ffprobe 8.0 locally and 9.0.1 in CI | `uv run --python 3.14 pytest` |
 | A 60 s, 1080p, 30 fps synthetic clip (1,800 frames, 21.6 MB) | ingest in 0.7 to 1.1 s, all four quality flags `ok`, 273 KB of artifacts | see below |
 
 The 1080p clip is not committed. This makes it:
@@ -142,8 +145,8 @@ ffmpeg -f lavfi -i testsrc2=size=1920x1080:rate=30:duration=60 \
 These are timings and sizes of the ingest stage on synthetic input. They say nothing about
 climbing, because nothing here sees a climber yet.
 
-CI runs these checks on every pull request and every push to `main`:
-[`ci.yml`](.github/workflows/ci.yml).
+CI runs lint and types, the suite without ffprobe, and the suite with ffprobe (macOS, Python 3.11
+and 3.14) on every pull request and every push to `main`: [`ci.yml`](.github/workflows/ci.yml).
 
 ## Status and limits
 
